@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>🌈 Mega Spelling Challenge</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --blue:#1e88e5;
+  --accent:#00e5ff;
+  --success:#4caf50;
+  --danger:#ff5252;
+  --bg1:#ff9a9e;
+  --bg2:#fad0c4;
+  --bg3:#a1c4fd;
+}
+body {
+  margin:0;
+  font-family:'Poppins',sans-serif;
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:linear-gradient(135deg,var(--bg1),var(--bg2),var(--bg3));
+  background-size:400% 400%;
+  animation:bgMove 20s ease infinite;
+  color:#fff;
+  text-align:center;
+}
+@keyframes bgMove {0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+#introScreen, #gameContainer {
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  background:rgba(0,0,0,.35);
+  padding:25px;
+  border-radius:24px;
+  width:90%;
+  max-width:500px;
+  box-shadow:0 10px 25px rgba(0,0,0,.5);
+}
+#introScreen h1 {font-size:40px; color:#fff; text-shadow:0 0 20px #00e5ff; margin-bottom:15px;}
+#introScreen p {font-size:16px; line-height:1.5; margin-bottom:20px;}
+#introScreen button {padding:14px 28px; font-size:18px; border:none; border-radius:16px; background:#00e5ff; color:#1565c0; font-weight:700; cursor:pointer; transition:.3s;}
+#introScreen button:hover {transform:scale(1.05);}
+#gameContainer {display:none;}
+.header {display:flex; justify-content:space-between; width:100%; font-size:18px; font-weight:600; margin-bottom:15px;}
+#progressWrapper {margin:15px 0; width:100%;}
+#progressBar {height:14px; background:rgba(255,255,255,.3); border-radius:20px; overflow:hidden;}
+#progressFill {height:100%; width:0%; background:var(--accent); transition:.5s;}
+#clue {font-size:18px; margin:15px 0; font-style:italic; padding:10px 15px; background:rgba(0,0,0,.2); border-radius:15px;}
+#jumbledWord {display:flex; justify-content:center; flex-wrap:wrap; gap:12px; margin:20px 0;}
+.letter-circle {width:60px; height:60px; background:#fff; color:var(--blue); font-size:24px; font-weight:700; border-radius:12px; display:flex; align-items:center; justify-content:center;}
+input {padding:12px; font-size:18px; width:80%; max-width:300px; border-radius:12px; border:2px solid #fff; outline:none; text-align:center; margin-top:10px;}
+input:disabled {background:rgba(255,255,255,.2);}
+#result {margin-top:15px; font-size:20px; font-weight:700;}
+#startTimerBtn, #submitBtn {margin-top:10px; padding:12px 24px; font-size:16px; font-weight:700; border:none; border-radius:16px; cursor:pointer;}
+#startTimerBtn {background:var(--success); color:#fff;}
+#submitBtn {background:var(--accent); color:#1565c0;}
+#startTimerBtn:hover,#submitBtn:hover{transform:scale(1.05);}
+.shake {animation:shake .5s;} 
+@keyframes shake{0%{transform:translateX(0)}25%{transform:translateX(-6px)}50%{transform:translateX(6px)}75%{transform:translateX(-6px)}100%{transform:translateX(0)}}
+</style>
+</head>
+<body>
+
+<div id="introScreen">
+<h1>🌟 Spelling Challenge</h1>
+<p>Instructions: <br>
+1️⃣ Click <b>Start Game</b> to begin.<br>
+2️⃣ Click <b>Play Timer</b> to start the 20-second countdown.<br>
+3️⃣ Type the correct word using your keyboard.<br>
+4️⃣ Press <b>Submit Answer</b> or Enter to check your answer.<br>
+5️⃣ Your score will be recorded. Try to answer quickly for more points!</p>
+<button onclick="startGame()">▶️ Start Game</button>
+</div>
+
+<div id="gameContainer">
+<div class="header">
+<div id="scoreBoard">🏆 Score: <span id="score">0</span>/20</div>
+<div id="timer">⏱ 20s</div>
+</div>
+<div id="progressWrapper">
+<div id="progressText">Question 1 of 20</div>
+<div id="progressBar"><div id="progressFill"></div></div>
+</div>
+<div id="clue"></div>
+<div id="jumbledWord"></div>
+<input type="text" id="userInput" placeholder="Type your answer..." autocomplete="off" disabled>
+<div>
+<button id="startTimerBtn" onclick="startTimer()">▶️ Play Timer</button>
+<button id="submitBtn" onclick="checkAnswer()" disabled>✅ Submit Answer</button>
+</div>
+<div id="result"></div>
+
+<script>
+const words = [
+  {word:'noun', clue:'Represents a person, place, or thing.'},
+  {word:'verb', clue:'Describes an action or state.'},
+  {word:'adjective', clue:'Describes a quality of a noun.'},
+  {word:'adverb', clue:'Modifies verbs, adjectives, or adverbs.'},
+  {word:'pronoun', clue:'Replaces a noun in a sentence.'},
+  {word:'plural', clue:'More than one item (e.g., dogs).'},
+  {word:'singular', clue:'Only one item (e.g., dog).'},
+  {word:'synonym', clue:'A word with similar meaning.'},
+  {word:'antonym', clue:'A word opposite in meaning.'},
+  {word:'clause', clue:'A group of words with subject and predicate.'},
+  {word:'article', clue:'A word like a, an, or the.'},
+  {word:'preposition', clue:'Shows relationship between a noun/pronoun and another word.'},
+  {word:'conjunction', clue:'Joins words, phrases, or clauses.'},
+  {word:'interjection', clue:'Expresses emotion or exclamation.'},
+  {word:'determiner', clue:'Introduces a noun and expresses reference.'},
+  {word:'possessive', clue:'Shows ownership.'},
+  {word:'collective', clue:'A word that names a group of things or people.'},
+  {word:'abstract', clue:'Names an idea, quality, or state.'},
+  {word:'consonant', clue:'Any letter that is not a vowel.'},
+  {word:'vowel', clue:'Letters a, e, i, o, u.'}
+];
+
+let currentWord='', score=0, question=0, maxQuestions=20, timeLeft=20, timerInterval;
+let timerStarted = false;
+const input=document.getElementById('userInput');
+const startBtn=document.getElementById('startTimerBtn');
+const submitBtn=document.getElementById('submitBtn');
+
+function startGame(){
+  document.getElementById('introScreen').style.display='none';
+  document.getElementById('gameContainer').style.display='flex';
+  question=0; score=0;
+  nextQuestion();
+}
+
+function shuffle(word){
+  let arr=word.split('');
+  do{arr.sort(()=>Math.random()-0.5);}while(arr.join('')===word);
+  return arr.join('');
+}
+
+function nextQuestion(){
+  if(question>=maxQuestions){
+    alert(`🎉 Game Over! Score: ${score}/${maxQuestions}`);
+    location.reload();
+    return;
+  }
+  question++;
+  const r=Math.floor(Math.random()*words.length);
+  currentWord=words[r].word;
+  document.getElementById('clue').textContent='💡 '+words[r].clue;
+  showLetters(shuffle(currentWord));
+  input.value=''; input.disabled=true; startBtn.disabled=false; submitBtn.disabled=true;
+  timeLeft=20; document.getElementById('timer').textContent=`⏱ ${timeLeft}s`;
+  document.getElementById('progressText').textContent=`Question ${question} of ${maxQuestions}`;
+  document.getElementById('progressFill').style.width=(question/maxQuestions*100)+'%';
+  timerStarted = false;
+  document.getElementById('result').textContent='';
+}
+
+function showLetters(word){
+  const container=document.getElementById('jumbledWord');
+  container.innerHTML='';
+  word.split('').forEach(l=>{
+    const d=document.createElement('div');
+    d.className='letter-circle';
+    d.textContent=l.toUpperCase();
+    container.appendChild(d);
+  });
+}
+
+function startTimer(){
+  timerStarted = true;
+  input.disabled=false;
+  input.focus();
+  startBtn.disabled=true;
+  submitBtn.disabled=false;
+
+  clearInterval(timerInterval);
+  timerInterval=setInterval(()=>{
+    timeLeft--;
+    document.getElementById('timer').textContent=`⏱ ${timeLeft}s`;
+    if(timeLeft<=0){
+      clearInterval(timerInterval);
+      checkAnswer(true);
+    }
+  },1000);
+}
+
+function checkAnswer(timeout=false){
+  if(!timerStarted) return; // cannot submit before timer
+  clearInterval(timerInterval);
+  const val=input.value.toLowerCase().trim();
+  const result=document.getElementById('result');
+  if(val===currentWord){
+    result.textContent='✅ Correct!';
+    result.style.color='var(--success)';
+    score++;
+  } else {
+    result.textContent=timeout?'⏱ Time Up! ❌':'❌ Wrong!';
+    result.style.color='var(--danger)';
+    input.classList.add('shake');
+    setTimeout(()=>input.classList.remove('shake'),500);
+  }
+  timerStarted=false;
+  submitBtn.disabled=true;
+  setTimeout(nextQuestion,1300);
+}
+
+input.addEventListener('keydown', e=>{
+  if(e.key==='Enter') checkAnswer();
+});
+</script>
+</body>
+</html>

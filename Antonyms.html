@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>🌸 Antonyms Challenge</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+
+<style>
+body {
+  font-family: 'Poppins', sans-serif;
+  background: linear-gradient(135deg, #f3e5f5, #e1f5fe);
+  margin: 0;
+  padding: 30px;
+}
+
+.container {
+  max-width: 720px;
+  margin: auto;
+  background: rgba(255,255,255,0.95);
+  padding: 40px 30px;
+  border-radius: 28px;
+  box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+  text-align: center;
+  animation: fadeIn 0.8s ease;
+}
+
+@keyframes fadeIn {
+  from {opacity:0; transform: translateY(20px);}
+  to {opacity:1; transform: translateY(0);}
+}
+
+h1 {
+  color: #8e24aa;
+  font-size: 34px;
+  margin-bottom: 10px;
+}
+
+.directions {
+  font-size: 18px;
+  color: #444;
+  margin-bottom: 20px;
+  background: linear-gradient(135deg, #fce4ec, #e1f5fe);
+  padding: 14px 22px;
+  border-radius: 14px;
+}
+
+.word {
+  font-size: 40px;
+  font-weight: 600;
+  margin: 15px 0 6px;
+  color: #6a1b9a;
+}
+
+.meaning {
+  font-size: 18px;
+  color: #555;
+  margin-bottom: 15px;
+  font-style: italic;
+}
+
+.timer {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+  margin: 10px 0;
+}
+.timer.warning {
+  color: #e53935;
+  animation: pulse 0.6s infinite alternate;
+}
+@keyframes pulse {
+  from { transform: scale(1); }
+  to { transform: scale(1.1); }
+}
+
+.start-btn, .restart-btn {
+  background: linear-gradient(135deg, #8e24aa, #6a1b9a);
+  color: white;
+  padding: 12px 22px;
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  font-size: 16px;
+  margin: 10px;
+  transition: 0.3s;
+  box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+}
+.start-btn:hover, .restart-btn:hover {
+  transform: scale(1.08);
+}
+
+.choices {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.choice {
+  background: linear-gradient(135deg, #e1f5fe, #f3e5f5);
+  padding: 12px 20px;
+  border-radius: 14px;
+  font-size: 18px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: 0.3s;
+  animation: float 2s ease-in-out infinite alternate;
+  box-shadow: 0 5px 12px rgba(0,0,0,0.15);
+}
+.choice:hover { transform: scale(1.08); }
+
+.correct {
+  background: #c8e6c9 !important;
+  border-color: #2e7d32;
+  animation: none !important;
+}
+.wrong {
+  background: #ffcdd2 !important;
+  border-color: #c62828;
+  animation: shake 0.4s;
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  100% { transform: translateY(-6px); }
+}
+@keyframes shake {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  50% { transform: translateX(6px); }
+  75% { transform: translateX(-6px); }
+  100% { transform: translateX(0); }
+}
+
+.feedback {
+  font-size: 20px;
+  font-weight: 600;
+  margin-top: 20px;
+  min-height: 28px;
+}
+
+.final-score {
+  font-size: 26px;
+  font-weight: 600;
+  color: #6a1b9a;
+  margin-top: 30px;
+}
+
+#introScreen { text-align: center; }
+#gameScreen { display: none; }
+</style>
+</head>
+
+<body>
+
+<div class="container" id="introScreen">
+  <h1>🌸 Antonyms Challenge</h1>
+  <div class="directions">
+    <p><b>Directions:</b> Choose the correct <b>antonym</b> of the word.</p>
+    <p>⏱ You have <b>15 seconds</b> per question.</p>
+  </div>
+  <button class="start-btn" onclick="startGame()">▶ Start Game</button>
+</div>
+
+<div class="container" id="gameScreen">
+  <h1>🌸 Antonyms Challenge</h1>
+  <div class="directions">Choose the antonym of the word shown below.</div>
+  <div id="timer" class="timer">⏱ Time: 15s</div>
+  <div id="wordDisplay" class="word"></div>
+  <div id="meaningBox" class="meaning"></div>
+  <div class="choices" id="choicesBox"></div>
+  <div id="feedback" class="feedback"></div>
+  <div class="final-score" id="scoreBox"></div>
+  <button class="restart-btn" id="restartBtn" onclick="restartGame()" style="display:none;">🔁 Restart Game</button>
+</div>
+
+<!-- AUDIO -->
+<audio id="bgMusic" loop>
+  <source src="https://cdn.pixabay.com/download/audio/2022/03/02/audio_3c2b3e3bb8.mp3" type="audio/mpeg">
+</audio>
+<audio id="correctSfx">
+  <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_6fa43491b2.mp3" type="audio/mpeg">
+</audio>
+<audio id="wrongSfx">
+  <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_cdc9bb97da.mp3" type="audio/mpeg">
+</audio>
+
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+
+<script>
+const questions = [
+  { word:"Allow", correct:"Forbid", options:["Forbid","Permit","Agree","Share"], meaning:"To give permission." },
+  { word:"Silent", correct:"Noisy", options:["Noisy","Quiet","Soft","Calm"], meaning:"Not making sound." },
+  { word:"Build", correct:"Destroy", options:["Destroy","Make","Form","Fix"], meaning:"To create something." },
+  { word:"Weak", correct:"Strong", options:["Strong","Soft","Firm","Hard"], meaning:"Lacking strength." },
+  { word:"Expand", correct:"Contract", options:["Contract","Stretch","Enlarge","Open"], meaning:"To grow larger." },
+  { word:"Float", correct:"Sink", options:["Sink","Rise","Swim","Move"], meaning:"To stay on the surface." },
+  { word:"Admit", correct:"Deny", options:["Deny","Accept","Believe","Tell"], meaning:"To say something is true." },
+  { word:"Whisper", correct:"Shout", options:["Shout","Talk","Speak","Call"], meaning:"To speak softly." },
+  { word:"Deep", correct:"Shallow", options:["Shallow","Low","Narrow","Short"], meaning:"Far down from surface." },
+  { word:"Huge", correct:"Tiny", options:["Tiny","Small","Wide","Tall"], meaning:"Very large." },
+  { word:"Hide", correct:"Show", options:["Show","Cover","Block","Close"], meaning:"To keep out of sight." },
+  { word:"Smooth", correct:"Rough", options:["Rough","Soft","Clean","Flat"], meaning:"Having an even surface." },
+  { word:"Clever", correct:"Foolish", options:["Foolish","Smart","Wise","Quick"], meaning:"Quick to learn." },
+  { word:"Encourage", correct:"Discourage", options:["Discourage","Motivate","Support","Inspire"], meaning:"Give confidence." },
+  { word:"Natural", correct:"Artificial", options:["Artificial","Real","Fresh","Pure"], meaning:"Not man-made." },
+  { word:"Accept", correct:"Refuse", options:["Refuse","Take","Allow","Welcome"], meaning:"Agree to receive." },
+  { word:"Cheerful", correct:"Gloomy", options:["Gloomy","Happy","Bright","Kind"], meaning:"Full of joy." },
+  { word:"Tight", correct:"Loose", options:["Loose","Firm","Hard","Fit"], meaning:"Not loose." },
+  { word:"Brave", correct:"Fearful", options:["Fearful","Bold","Strong","Proud"], meaning:"Showing courage." },
+  { word:"Arrive", correct:"Depart", options:["Depart","Enter","Stay","Come"], meaning:"Reach a place." }
+];
+
+let current=0, score=0, timeLeft=15, timerInterval;
+
+const timerEl=document.getElementById("timer");
+const bgMusic=document.getElementById("bgMusic");
+const correctSfx=document.getElementById("correctSfx");
+const wrongSfx=document.getElementById("wrongSfx");
+
+bgMusic.volume=0.35;
+
+function startGame(){
+  introScreen.style.display="none";
+  gameScreen.style.display="block";
+  score=0; current=0;
+  bgMusic.play().catch(()=>{});
+  renderQuestion();
+}
+
+function startTimer(){
+  clearInterval(timerInterval);
+  timeLeft=15;
+  timerEl.textContent=`⏱ Time: ${timeLeft}s`;
+  timerEl.classList.remove("warning");
+
+  timerInterval=setInterval(()=>{
+    timeLeft--;
+    timerEl.textContent=`⏱ Time: ${timeLeft}s`;
+    if(timeLeft<=5) timerEl.classList.add("warning");
+    if(timeLeft<=0){
+      clearInterval(timerInterval);
+      autoWrong();
+    }
+  },1000);
+}
+
+function renderQuestion(){
+  const q=questions[current];
+  wordDisplay.textContent=q.word;
+  meaningBox.textContent=q.meaning;
+  feedback.textContent="";
+  scoreBox.textContent=`Question ${current+1} of ${questions.length}`;
+  choicesBox.innerHTML="";
+
+  [...q.options].sort(()=>Math.random()-0.5).forEach(opt=>{
+    const b=document.createElement("button");
+    b.className="choice";
+    b.textContent=opt;
+    b.onclick=()=>selectAnswer(b,opt,q.correct);
+    choicesBox.appendChild(b);
+  });
+  startTimer();
+}
+
+function selectAnswer(btn,sel,correct){
+  clearInterval(timerInterval);
+  document.querySelectorAll(".choice").forEach(b=>b.disabled=true);
+
+  if(sel===correct){
+    btn.classList.add("correct");
+    feedback.textContent="✅ Correct!";
+    score++; correctSfx.play().catch(()=>{});
+  }else{
+    btn.classList.add("wrong");
+    feedback.textContent="❌ Incorrect!";
+    wrongSfx.play().catch(()=>{});
+    document.querySelectorAll(".choice").forEach(b=>{
+      if(b.textContent===correct) b.classList.add("correct");
+    });
+  }
+  setTimeout(nextQuestion,1200);
+}
+
+function autoWrong(){
+  feedback.textContent="⏰ Time’s up!";
+  wrongSfx.play().catch(()=>{});
+  setTimeout(nextQuestion,1200);
+}
+
+function nextQuestion(){
+  current++;
+  if(current<questions.length) renderQuestion();
+  else endGame();
+}
+
+function endGame(){
+  wordDisplay.textContent="🎉 Game Over!";
+  meaningBox.textContent="";
+  choicesBox.innerHTML="";
+  feedback.textContent="";
+  scoreBox.textContent=`Final Score: ${score} / ${questions.length}`;
+  restartBtn.style.display="inline-block";
+  confetti({particleCount:150,spread:70});
+}
+
+function restartGame(){
+  restartBtn.style.display="none";
+  startGame();
+}
+</script>
+
+</body>
+</html>

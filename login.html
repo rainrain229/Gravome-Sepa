@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Game Innovation Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+  }
+
+  body {
+    height: 100vh;
+    background: linear-gradient(135deg, #6a0dad, #8b5cf6, #d946ef);
+    background-size: 400% 400%;
+    animation: gradientMove 8s ease infinite;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+  }
+
+  @keyframes gradientMove {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  .login-container {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(15px);
+    padding: 2.5rem;
+    border-radius: 1.5rem;
+    box-shadow: 0 0 25px rgba(0, 0, 0, 0.2);
+    width: 320px;
+    text-align: center;
+    color: white;
+    animation: fadeIn 1s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  h1 {
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+    letter-spacing: 1px;
+  }
+
+  p {
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+    color: #f3f3f3;
+  }
+
+  input {
+    width: 100%;
+    padding: 0.8rem;
+    margin-bottom: 1rem;
+    border: none;
+    border-radius: 0.8rem;
+    outline: none;
+    font-size: 1rem;
+  }
+
+  button {
+    width: 100%;
+    padding: 0.8rem;
+    border: none;
+    border-radius: 0.8rem;
+    background: #fff;
+    color: #6a0dad;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  button:hover {
+    background: #6a0dad;
+    color: white;
+  }
+
+  .error {
+    color: #ffb3b3;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+  }
+
+  audio {
+    display: none;
+  }
+</style>
+</head>
+<body>
+
+<div class="login-container">
+  <h1>🎮 Gravome-Sepa</h1>
+  <p>Enter your name and grade & section to begin your adventure!</p>
+  
+  <input type="text" id="name" placeholder="Full Name">
+  <input type="text" id="grade" placeholder="Grade & Section">
+  <button onclick="login()">Start Game</button>
+  <div id="error-message" class="error"></div>
+</div>
+
+<audio id="bg-music" autoplay loop>
+  <source src="https://cdn.pixabay.com/audio/2023/03/14/audio_740b0e85f2.mp3" type="audio/mpeg">
+</audio>
+
+<script>
+  function login() {
+    const name = document.getElementById("name").value.trim();
+    const grade = document.getElementById("grade").value.trim();
+    const error = document.getElementById("error-message");
+
+    if (name === "" || grade === "") {
+      error.textContent = "❌ Please fill out both fields to continue!";
+    } else {
+      error.textContent = "";
+      alert("✅ Welcome " + name + " (" + grade + ")! Starting your game...");
+      // Save the player info to local storage
+      localStorage.setItem("playerName", name);
+      localStorage.setItem("playerGrade", grade);
+      // Redirect to your game page
+      window.location.href = "mae.html"; 
+    }
+  }
+</script>
+
+</body>
+</html>

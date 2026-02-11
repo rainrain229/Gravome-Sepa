@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Admin Panel</title>
+
+<style>
+body {
+  font-family: Arial;
+  padding: 20px;
+}
+button {
+  padding: 10px 20px;
+  font-size: 16px;
+}
+table {
+  margin-top: 20px;
+  border-collapse: collapse;
+}
+td, th {
+  border: 1px solid #ccc;
+  padding: 8px;
+}
+</style>
+</head>
+
+<body>
+
+<h2>📋 User Data</h2>
+<button onclick="exportCSV()">⬇ Export to Excel</button>
+
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Grade</th>
+      <th>Time</th>
+    </tr>
+  </thead>
+  <tbody id="table"></tbody>
+</table>
+
+<script>
+const users = JSON.parse(localStorage.getItem("users")) || [];
+
+const table = document.getElementById("table");
+users.forEach(u => {
+  table.innerHTML += `
+    <tr>
+      <td>${u.name}</td>
+      <td>${u.grade}</td>
+      <td>${u.time}</td>
+    </tr>
+  `;
+});
+
+function exportCSV() {
+  if (users.length === 0) {
+    alert("No users found");
+    return;
+  }
+
+  let csv = "Name,Grade,Time\n";
+  users.forEach(u => {
+    csv += `${u.name},${u.grade},${u.time}\n`;
+  });
+
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "users.csv";
+  a.click();
+}
+</script>
+
+</body>
+</html>

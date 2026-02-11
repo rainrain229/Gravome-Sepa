@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Capitalization Quiz Game</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  font-family:'Poppins',sans-serif;
+  background:linear-gradient(135deg,#667eea,#764ba2);
+}
+.screen{display:none;width:100%;height:100%;justify-content:center;align-items:center}
+.screen.active{display:flex}
+
+.card{
+  background:white;
+  width:94%;
+  max-width:450px;
+  padding:30px;
+  border-radius:30px;
+  text-align:center;
+  box-shadow:0 25px 60px rgba(0,0,0,.35);
+  animation:fade .6s ease;
+  position:relative;
+}
+@keyframes fade{from{opacity:0;transform:translateY(40px)}to{opacity:1}}
+h1{font-size:26px;margin-bottom:10px}
+p{font-size:15px;color:#444}
+.sentence{font-size:18px;font-weight:600;margin:16px 0;color:#333}
+input{width:100%;padding:16px;font-size:16px;border-radius:14px;border:2px solid #667eea;margin-top:10px}
+input:disabled{background:#eee}
+button{width:100%;padding:14px;margin-top:14px;border:none;border-radius:40px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;font-size:16px;font-weight:600}
+button:disabled{opacity:.5}
+
+/* TIMER & PROGRESS */
+.timer{font-size:42px;font-weight:700;color:#667eea;margin-bottom:6px}
+.bar{height:12px;background:#ddd;border-radius:20px;overflow:hidden;margin-bottom:16px}
+.fill{height:100%;width:100%;background:#2ecc71;transition:width 1s linear}
+.progress-text{font-size:14px;font-weight:600;margin-bottom:6px;color:#333}
+
+/* FEEDBACK */
+.feedback{margin-top:12px;font-size:16px;font-weight:600}
+.correct{color:#2ecc71}
+.wrong{color:#e74c3c}
+
+/* CONFETTI */
+#confettiCanvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999}
+</style>
+</head>
+<body>
+
+<canvas id="confettiCanvas"></canvas>
+
+<!-- INSTRUCTION SCREEN -->
+<div class="screen active" id="intro">
+  <div class="card">
+    <h1>📝 Capitalization Quiz</h1>
+    <p>Retype the sentence correctly with proper capitalization.</p>
+    <p>✔ 50 seconds per sentence<br>✔ Press START TIMER before typing<br>✔ Keyboard typing only</p>
+    <button onclick="go('game')">Start Game 🎮</button>
+  </div>
+</div>
+
+<!-- GAME SCREEN -->
+<div class="screen" id="game">
+  <div class="card">
+    <div class="progress-text" id="progressText">Question 1 of 10</div>
+    <div class="timer" id="time">50 seconds</div>
+    <div class="bar"><div class="fill" id="fill"></div></div>
+
+    <p>Retype this sentence:</p>
+    <div class="sentence" id="sentence"></div>
+
+    <input id="input" disabled placeholder="Press START TIMER">
+    <button id="startBtn" onclick="startTimer()">⏱ Start Timer</button>
+    <button id="submitBtn" disabled onclick="submitAnswer()">Submit</button>
+
+    <div class="feedback" id="feedback"></div>
+    <p id="scoreDisplay" style="margin-top:10px;font-weight:600;color:#333"></p>
+  </div>
+</div>
+
+<script>
+/* NAVIGATION */
+function go(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+/* GAME DATA - 10 questions */
+const items=[
+  {wrong:"the students visited rizal park last june.", correct:"The students visited Rizal Park last June."},
+  {wrong:"mrs. santos teaches english at mapua university.", correct:"Mrs. Santos teaches English at Mapua University."},
+  {wrong:"we celebrated independence day in the philippines.", correct:"We celebrated Independence Day in the Philippines."},
+  {wrong:"juan and maria attended the math workshop in quezon city.", correct:"Juan and Maria attended the Math Workshop in Quezon City."},
+  {wrong:"professor cruz explained the chapter on the solar system.", correct:"Professor Cruz explained the chapter on the Solar System."},
+  {wrong:"ana submitted her science project at mapua university.", correct:"Ana submitted her Science Project at Mapua University."},
+  {wrong:"the principal of st. thomas academy gave a welcome speech.", correct:"The Principal of St. Thomas Academy gave a Welcome Speech."},
+  {wrong:"we watched the play romeo and juliet at the city theater.", correct:"We watched the play Romeo and Juliet at the City Theater."},
+  {wrong:"the students celebrated world teachers day last october.", correct:"The students celebrated World Teachers Day last October."},
+  {wrong:"professor reyes conducted a workshop on creative writing.", correct:"Professor Reyes conducted a Workshop on Creative Writing."}
+];
+
+let index=0;
+let score=0;
+let time=50;
+let timer;
+
+const sentence=document.getElementById("sentence");
+const input=document.getElementById("input");
+const feedback=document.getElementById("feedback");
+const startBtn=document.getElementById("startBtn");
+const submitBtn=document.getElementById("submitBtn");
+const progressText=document.getElementById("progressText");
+const scoreDisplay=document.getElementById("scoreDisplay");
+const fill=document.getElementById("fill");
+const confettiCanvas=document.getElementById("confettiCanvas");
+const ctx=confettiCanvas.getContext("2d");
+
+confettiCanvas.width=window.innerWidth;
+confettiCanvas.height=window.innerHeight;
+
+/* INITIAL LOAD */
+loadQuestion();
+
+function loadQuestion(){
+  sentence.textContent=items[index].wrong;
+  input.value="";
+  input.disabled=true;
+  startBtn.disabled=false;
+  submitBtn.disabled=true;
+  feedback.textContent="";
+  progressText.textContent=`Question ${index+1} of ${items.length}`;
+  scoreDisplay.textContent=`Score: ${score}`;
+  fill.style.width="100%";
+  document.getElementById("time").textContent="50 seconds";
+}
+
+/* TIMER */
+function startTimer(){
+  input.disabled=false;
+  input.focus();
+  startBtn.disabled=true;
+  submitBtn.disabled=false;
+  time=50;
+  document.getElementById("time").textContent=time+" seconds";
+  fill.style.width="100%";
+
+  timer=setInterval(()=>{
+    time--;
+    document.getElementById("time").textContent=time+" seconds";
+    fill.style.width=(time/50*100)+"%";
+    if(time<=0){
+      clearInterval(timer);
+      check(false);
+    }
+  },1000);
+}
+
+/* SUBMIT ANSWER */
+function submitAnswer(){
+  check(input.value.trim()===items[index].correct);
+}
+
+/* CHECK FUNCTION */
+function check(correct){
+  clearInterval(timer);
+  feedback.textContent=correct?"✅ Correct!":"❌ Wrong!";
+  feedback.className="feedback "+(correct?"correct":"wrong");
+  if(correct) score++;
+  if(correct) launchConfetti();
+
+  setTimeout(()=>{
+    index++;
+    if(index>=items.length){
+      endGame();
+    }else{
+      loadQuestion();
+    }
+  },1200);
+}
+
+/* END GAME */
+function endGame(){
+  sentence.textContent="🎉 Quiz Completed!";
+  input.style.display="none";
+  startBtn.style.display="none";
+  submitBtn.style.display="none";
+  feedback.textContent="";
+  scoreDisplay.textContent=`Final Score: ${score} / ${items.length}`;
+}
+
+/* CONFETTI */
+function launchConfetti(){
+  const confetti=[];
+  for(let i=0;i<120;i++){
+    confetti.push({
+      x:Math.random()*confettiCanvas.width,
+      y:Math.random()*confettiCanvas.height- confettiCanvas.height,
+      r:Math.random()*6+2,
+      d:Math.random()*120,
+      color:`hsl(${Math.random()*360},100%,50%)`,
+      tilt:Math.random()*10-10,
+      tiltAngleIncrement:Math.random()*0.07+0.05,
+      tiltAngle:0
+    });
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);
+    confetti.forEach(c=>{
+      ctx.beginPath();
+      ctx.lineWidth=c.r;
+      ctx.strokeStyle=c.color;
+      ctx.moveTo(c.x+c.tilt+c.r/2,c.y);
+      ctx.lineTo(c.x+c.tilt,c.y+c.tilt+c.r/2);
+      ctx.stroke();
+    });
+    update();
+  }
+
+  function update(){
+    confetti.forEach((c,i)=>{
+      c.tiltAngle+=c.tiltAngleIncrement;
+      c.y+=(Math.cos(c.d)+3+c.r/2)/2;
+      c.tilt=Math.sin(c.tiltAngle)*15;
+      if(c.y>confettiCanvas.height){
+        confetti[i]={x:Math.random()*confettiCanvas.width,y:-20,r:c.r,d:c.d,color:c.color,tilt:Math.random()*10-10,tiltAngleIncrement:c.tiltAngleIncrement,tiltAngle:0};
+      }
+    });
+  }
+
+  const interval=setInterval(draw,20);
+  setTimeout(()=>{
+    clearInterval(interval);
+    ctx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);
+  },1200);
+}
+</script>
+
+</body>
+</html>

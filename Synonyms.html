@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>🎯 Synonyms Quiz Game</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --primary:#6a0dad;
+  --bg:#f3e8ff;
+  --card:#ffffff;
+  --accent:#9d4edd;
+  --correct:#2e7d32;
+  --wrong:#d32f2f;
+  --progress:#9d4edd;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  font-family: 'Roboto', sans-serif;
+  background:var(--bg);
+  display:flex;
+  justify-content:center;
+  padding:28px;
+  color:#222;
+  transition: background .3s ease;
+}
+.wrap{ width:100%; max-width:920px; }
+header{ text-align:center; margin-bottom:18px; }
+h1{ margin:0; color:var(--primary); font-size:36px; text-shadow:1px 1px 3px #aaa; }
+.subtitle{ color:#5b3b8a; margin-top:6px; font-size:18px; }
+.card{ background:var(--card); border-radius:20px; padding:28px; box-shadow:0 12px 30px rgba(0,0,0,0.12); border:3px solid rgba(106,13,173,0.08); }
+#startSlide,#introSlide,#quizArea,#resultArea{ display:none; }
+.center{text-align:center;}
+.big-btn{
+  background:var(--accent);
+  color:#fff; border:none;
+  padding:14px 26px; border-radius:20px; font-size:20px;
+  cursor:pointer; box-shadow:0 6px 20px rgba(106,13,173,0.25);
+  transition:all 0.2s ease;
+}
+.big-btn:hover{ transform:translateY(-3px) scale(1.03); }
+#instructions ul{ text-align:left; font-size:18px; padding-left:22px; margin:8px 0 0 0; }
+#instructions li{ margin:10px 0; line-height:1.5; }
+.wordBox{ margin:16px 0; padding:22px; border-left:6px solid var(--accent); border-radius:16px; background:#fff8ff; text-align:left; }
+.wordHeader{ color:var(--accent); font-weight:700; font-size:20px; margin-bottom:8px; }
+.word{ font-size:36px; font-weight:700; color:#4a148c; }
+.meaning{ font-style:italic; color:#444; margin-top:10px; font-size:18px; }
+.choices{ display:flex; gap:14px; flex-wrap:wrap; margin-top:20px; }
+.choice{ flex:1 1 42%; background:#fff; border-radius:16px; padding:16px; cursor:pointer; text-align:center; font-size:18px; border:2px solid var(--accent); transition:all .18s; box-shadow:0 6px 16px rgba(0,0,0,0.06); }
+.choice:hover{ transform:scale(1.04); }
+.choice.correct{ background:#e8fff0; border-color:var(--correct); color:var(--correct);}
+.choice.wrong{ background:#fff0f0; border-color:var(--wrong); color:var(--wrong); }
+#feedback{ font-weight:700; margin-top:14px; min-height:30px; font-size:18px; text-align:center;}
+.progress-container{ background:#ddd; border-radius:12px; overflow:hidden; margin:12px 0; }
+.progress-bar{ height:14px; background:var(--progress); width:0%; transition:width 0.3s ease; border-radius:12px; }
+.emoji{ position:fixed; top:-40px; pointer-events:none; z-index:9999; animation:drop 3s linear forwards; }
+@keyframes drop{ to { transform:translateY(110vh); opacity:0; } }
+body.flash-wrong{ background:#ffb3b3 !important; transition:background .2s; }
+#timer { font-size:20px; font-weight:700; color:var(--accent); margin-bottom:10px; text-align:right; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+
+<div class="card">
+
+<!-- START SLIDE -->
+<div id="startSlide">
+  <div id="instructions">
+    <h2 class="center">📘 How to Play</h2>
+    <ul>
+      <li>You will see a <strong>word</strong> and its <em>meaning</em>.</li>
+      <li>Choose the <strong>best synonym</strong>.</li>
+      <li>Correct = 🎉 fun sound & confetti!</li>
+      <li>Wrong = 😢 sad sound & effects.</li>
+      <li>Click 🔊 to hear pronunciation.</li>
+    </ul>
+  </div>
+  <div class="center">
+    <button class="big-btn" id="startBtn">Start Game ▶</button>
+  </div>
+</div>
+
+<!-- INTRO SLIDE -->
+<div id="introSlide">
+  <h2 class="center">Understanding Synonyms</h2>
+  <p style="font-size:18px; color:#444; max-width:760px; margin:10px auto">
+    Synonyms are words with similar meanings. Select the option that best matches the meaning shown.
+  </p>
+  <div class="center">
+    <button class="big-btn" id="beginBtn">Begin Quiz ▶</button>
+  </div>
+</div>
+
+<!-- QUIZ AREA -->
+<div id="quizArea">
+  <div id="timer">⏰ Time: 15s</div>
+  <div class="wordBox">
+    <div class="wordHeader" id="roundInfo">Round 1 of 20</div>
+    <div class="word" id="wordText"></div>
+    <div class="meaning" id="wordMeaning"></div>
+  </div>
+
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+    <div id="progressText">Progress: 0%</div>
+    <div>
+      <button class="big-btn" id="pronBtn" style="padding:8px 16px;font-size:16px">🔊 Listen</button>
+      <span id="scoreSmall" style="font-weight:700; color:var(--accent); margin-left:8px;">Score: 0</span>
+    </div>
+  </div>
+
+  <div class="progress-container">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+
+  <div class="choices" id="choices"></div>
+  <div id="feedback" class="center"></div>
+</div>
+
+<!-- RESULT AREA -->
+<div id="resultArea">
+  <div class="final" id="finalSummary"></div>
+  <div class="center" style="margin-top:14px;">
+    <button class="big-btn" id="tryAgainBtn">Play Again</button>
+  </div>
+</div>
+
+</div>
+
+<!-- AUDIO -->
+<audio id="happySfx" src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_f34d65e1c8.mp3?filename=correct-2-46134.mp3"></audio>
+<audio id="sadSfx" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_cc577ddb23.mp3?filename=error-126627.mp3"></audio>
+<audio id="correctSfx" src="https://cdn.pixabay.com/download/audio/2022/03/10/audio_8d8c59dbe8.mp3?filename=yehey-voice-10300.mp3"></audio>
+<audio id="wrongSfx" src="https://cdn.pixabay.com/download/audio/2022/03/16/audio_11dbda36b4.mp3?filename=oh-no-11468.mp3"></audio>
+<audio id="clickSfx" src="https://www.soundjay.com/buttons/sounds/button-16.mp3"></audio>
+<audio id="celebrationMusic" src="https://cdn.pixabay.com/download/audio/2022/08/09/audio_2b1f2be1a5.mp3?filename=happy-ukulele-126265.mp3" loop></audio>
+<audio id="bgMusic" src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_8a5b2b8c9e.mp3?filename=upbeat-background-11323.mp3" loop></audio>
+
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+<script>
+const questions = [
+  { word:"Angry", meaning:"Feeling strong displeasure.", correct:"Mad", options:["Mad","Calm","Soft","Quiet"], audio:"https://ssl.gstatic.com/dictionary/static/sounds/oxford/angry--_gb_1.mp3" },
+  { word:"Calm", meaning:"Peaceful and relaxed.", correct:"Peaceful", options:["Peaceful","Wild","Loud","Sharp"], audio:"https://ssl.gstatic.com/dictionary/static/sounds/oxford/calm--_gb_1.mp3" },
+  { word:"Strong", meaning:"Having great physical power.", correct:"Powerful", options:["Powerful","Weak","Light","Tiny"], audio:"https://ssl.gstatic.com/dictionary/static/sounds/oxford/strong--_gb_1.mp3" },
+  { word:"Clever", meaning:"Quick to understand or learn.", correct:"Smart", options:["Smart","Slow","Confused","Lazy"], audio:"https://ssl.gstatic.com/dictionary/static/sounds/oxford/clever--_gb_1.mp3" },
+  { word:"Rapid", meaning:"Moving very fast.", correct:"Quick", options:["Quick","Slow","Late","Heavy"], audio:"https://ssl.gstatic.com/dictionary/static/sounds/oxford/rapid--_gb_1.mp3" },
+  { word:"Assist", meaning:"To help someone.", correct:"Help", options:["Help","Block","Ignore","Hurt"], audio:"https://ssl.gstatic.com/dictionary/static/sounds/oxford/assist--_gb_1.mp3" },
+  { word:"Purchase", meaning:"To buy something.", correct:"Buy", options:["Buy","Sell","Borrow","Trade"], audio:"https://ssl.gstatic.com/dictionary/static/sounds/oxford/purchase--_gb_1.mp3" },
+  { word:"Finish", meaning:"To complete something.", correct:"Complete", options:["Complete","Begin","Pause","Start"], audio:"https://ssl.gstatic.com/dictionary/static/sounds/oxford/finish--_gb_1.mp3" },
+  { word:"Honest", meaning:"Telling the truth.", correct:"Truthful", options:["Truthful","Secretive","Careless","Silent"], audio:"https://ssl.gstatic.com/dictionary/static/sounds/oxford/honest--_gb_1.mp3" },
+  { word:"Joy", meaning:"A feeling of great happiness.", correct:"Happiness", options:["Happiness","Anger","Trouble","Pressure"], audio:"https://ssl.gstatic.com/dictionary/static/sounds/oxford/joy--_gb_1.mp3" },
+  { word:"End", meaning:"The point where something stops.", correct:"Finish", options:["Finish","Begin","Create","Open"], audio:"https://ssl.gstatic.com/dictionary/static/sounds/oxford/end--_gb_1.mp3" },
+  { word:"Neat", meaning:"Clean and orderly.", correct:"Tidy", options:["Tidy","Dirty","Messy","Broken"], audio:"https://ssl.gstatic.com/dictionary/static/sounds/oxford/neat--_gb_1.mp3" },
+  { word:"Difficult", meaning:"Hard to do.", correct:"Hard", options:["Hard","Easy","Soft","Light"], audio:"https://ssl.gstatic.com/dictionary/static/sounds/oxford/difficult--_gb_1.mp3" },
+  { word:"Quiet", meaning:"Making little or no noise.", correct:"Silent", options:["Silent","Loud","Busy","Big"], audio:"https://ssl.gstatic.com/dictionary/static/sounds/oxford/quiet--_gb_1.mp3" },
+  { word:"Huge", meaning:"Very large.", correct:"Enormous", options:["Enormous","Small","Thin","Short"], audio:"https://ssl.gstatic.com/dictionary/static/sounds/oxford/huge--_gb_1.mp3" },
+  { word:"Gift", meaning:"Something given to someone.", correct:"Present", options:["Present","Loss","Tool","Money"], audio:"https://ssl.gstatic.com/dictionary/static/sounds/oxford/gift--_gb_1.mp3" },
+  { word:"Repair", meaning:"To fix something.", correct:"Fix", options:["Fix","Break","Ruin","Hit"], audio:"https://ssl.gstatic.com/dictionary/static/sounds/oxford/repair--_gb_1.mp3" },
+  { word:"Brave", meaning:"Showing courage.", correct:"Courageous", options:["Courageous","Scared","Weak","Quiet"], audio:"https://ssl.gstatic.com/dictionary/static/sounds/oxford/brave--_gb_1.mp3" },
+  { word:"Arrive", meaning:"To reach a place.", correct:"Reach", options:["Reach","Leave","Pass","Hide"], audio:"https://ssl.gstatic.com/dictionary/static/sounds/oxford/arrive--_gb_1.mp3" },
+  { word:"Bright", meaning:"Giving off a lot of light.", correct:"Shiny", options:["Shiny","Dark","Dull","Faded"], audio:"https://ssl.gstatic.com/dictionary/static/sounds/oxford/bright--_gb_1.mp3" }
+];
+
+let index=0, score=0, shuffled=[], timerValue=15, timerInterval=null;
+const startSlide=document.getElementById('startSlide');
+const introSlide=document.getElementById('introSlide');
+const quizArea=document.getElementById('quizArea');
+const resultArea=document.getElementById('resultArea');
+
+const startBtn=document.getElementById('startBtn');
+const beginBtn=document.getElementById('beginBtn');
+const pronBtn=document.getElementById('pronBtn');
+const tryAgainBtn=document.getElementById('tryAgainBtn');
+
+const roundInfo=document.getElementById('roundInfo');
+const wordText=document.getElementById('wordText');
+const wordMeaning=document.getElementById('wordMeaning');
+const choicesEl=document.getElementById('choices');
+const feedback=document.getElementById('feedback');
+const progressText=document.getElementById('progressText');
+const progressBar=document.getElementById('progressBar');
+const scoreSmall=document.getElementById('scoreSmall');
+const finalSummary=document.getElementById('finalSummary');
+const timerEl=document.getElementById('timer');
+
+const happySfx=document.getElementById("happySfx");
+const sadSfx=document.getElementById("sadSfx");
+const correctSfx=document.getElementById('correctSfx');
+const wrongSfx=document.getElementById('wrongSfx');
+const clickSfx=document.getElementById('clickSfx');
+const celebrationMusic=document.getElementById('celebrationMusic');
+const bgMusic=document.getElementById('bgMusic');
+
+startSlide.style.display="block";
+
+function initGame(){
+  index=0; score=0; timerValue=15;
+  shuffled=[...questions].sort(()=>0.5 - Math.random());
+  scoreSmall.innerText="Score: 0";
+  progressText.innerText="Progress: 0%";
+  progressBar.style.width="0%";
+  feedback.innerText="";
+}
+
+function startTimer(){
+  clearInterval(timerInterval);
+  timerValue=15;
+  timerEl.innerText=`⏰ Time: ${timerValue}s`;
+  timerInterval=setInterval(()=>{
+    timerValue--;
+    timerEl.innerText=`⏰ Time: ${timerValue}s`;
+    if(timerValue<=0){
+      clearInterval(timerInterval);
+      autoNext();
+    }
+  },1000);
+}
+
+function showQuestion(){
+  const q=shuffled[index];
+  roundInfo.innerText=`Round ${index+1} of ${shuffled.length}`;
+  wordText.innerText=q.word;
+  wordMeaning.innerText="💡 Meaning: " + q.meaning;
+  progressText.innerText=`Progress: ${Math.round(((index+1)/shuffled.length)*100)}%`;
+  progressBar.style.width=`${Math.round(((index+1)/shuffled.length)*100)}%`;
+
+  const opts=[...q.options].sort(()=>0.5 - Math.random());
+  choicesEl.innerHTML="";
+  opts.forEach(opt=>{
+    const btn=document.createElement("div");
+    btn.className="choice";
+    btn.innerText=opt;
+    btn.onclick=()=>selectAnswer(btn,opt,q.correct);
+    choicesEl.appendChild(btn);
+  });
+
+  feedback.innerText="";
+  startTimer();
+}
+
+function autoNext(){
+  const correct=shuffled[index].correct;
+  document.querySelectorAll(".choice").forEach(c=>{ c.onclick=null; if(c.innerText===correct) c.classList.add("correct"); });
+  feedback.style.color="var(--accent)";
+  feedback.innerText=`⏰ Time's up! Correct: ${correct}`;
+  wrongSfx.currentTime=0; wrongSfx.play();
+  document.body.classList.add("flash-wrong");
+  setTimeout(()=>{
+    document.body.classList.remove("flash-wrong");
+    nextQuestion();
+  },1500);
+}
+
+function nextQuestion(){
+  index++;
+  if(index<shuffled.length) showQuestion();
+  else showResult();
+}
+
+function selectAnswer(el, selected, correct){
+  clearInterval(timerInterval);
+  document.querySelectorAll(".choice").forEach(c=>c.onclick=null);
+  if(selected===correct){
+    el.classList.add("correct");
+    feedback.style.color="var(--correct)";
+    feedback.innerText="😎 Correct!";
+    score++;
+    scoreSmall.innerText=`Score: ${score}`;
+    happySfx.currentTime=0; happySfx.play();
+    correctSfx.currentTime=0; correctSfx.play();
+    confetti({ particleCount: 50, spread: 70, origin: { y:0.3 } });
+  }else{
+    el.classList.add("wrong");
+    feedback.style.color="var(--wrong)";
+    feedback.innerText=`😢 Incorrect — correct: ${correct}`;
+    document.querySelectorAll(".choice").forEach(c=>{ if(c.innerText===correct) c.classList.add("correct"); });
+    sadSfx.currentTime=0; sadSfx.play();
+    wrongSfx.currentTime=0; wrongSfx.play();
+    document.body.classList.add("flash-wrong");
+    setTimeout(()=>{ document.body.classList.remove("flash-wrong"); },300);
+  }
+  setTimeout(nextQuestion,1500);
+}
+
+startBtn.onclick=()=>{
+  clickSfx.play();
+  startSlide.style.display="none";
+  introSlide.style.display="block";
+};
+
+beginBtn.onclick=()=>{
+  clickSfx.play();
+  introSlide.style.display="none";
+  initGame();
+  quizArea.style.display="block";
+  bgMusic.currentTime=0; bgMusic.volume=0.3; bgMusic.play();
+  showQuestion();
+};
+
+pronBtn.onclick=()=>{
+  clickSfx.play();
+  const a=new Audio(shuffled[index].audio);
+  a.play();
+};
+
+tryAgainBtn.onclick=()=>{
+  clickSfx.play();
+  resultArea.style.display="none";
+  initGame();
+  quizArea.style.display="block";
+  bgMusic.currentTime=0; bgMusic.volume=0.3; bgMusic.play();
+  showQuestion();
+};
+
+function showResult(){
+  quizArea.style.display="none";
+  resultArea.style.display="block";
+  bgMusic.pause();
+  celebrationMusic.currentTime=0; celebrationMusic.volume=0.6; celebrationMusic.play();
+  const percent=Math.round((score/shuffled.length)*100);
+  finalSummary.innerHTML=`
+    <h2>🎉 Congratulations!</h2>
+    <p>You finished all ${shuffled.length} rounds!</p>
+    <p style="font-size:20px;">🏆 Score: <strong style="color:var(--correct)">${score}/${shuffled.length}</strong></p>
+    <p>📊 Percentage: <strong>${percent}%</strong></p>
+    <p>Great job! Keep practicing! ✨</p>
+  `;
+  confetti({ particleCount: 70, spread: 100, origin:{ y:0.3 } });
+}
+</script>
+</body>
+</html>
+

@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gravome-Sepa Learning Menu</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --text-main: #333;
+  --text-dark: #111;
+  --bg-gradient: linear-gradient(135deg, #9ad3ff, #ffe4f4);
+  --radius: 16px;
+  --shadow: 0 10px 20px rgba(0,0,0,0.25);
+  --icon-size: 40px;
+  --icon-color: rgba(255,255,255,0.3);
+}
+
+body {
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  background: var(--bg-gradient);
+  color: var(--text-main);
+  text-align: center;
+  padding: 15px;
+  min-height: 100vh;
+  overflow: hidden;
+  position: relative;
+}
+
+/* FLOATING ICONS */
+.floating-icon {
+  position: absolute;
+  font-size: var(--icon-size);
+  color: var(--icon-color);
+  pointer-events: none;
+  user-select: none;
+  animation-name: floatAnimation;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+@keyframes floatAnimation {
+  0% { transform: translateY(0) rotate(0deg); opacity: 0.5; }
+  50% { transform: translateY(-20px) rotate(180deg); opacity: 1; }
+  100% { transform: translateY(0) rotate(360deg); opacity: 0.5; }
+}
+
+/* BUTTONS */
+.start-btn, .menu-button, .reset-btn {
+  border-radius: var(--radius);
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.start-btn {
+  padding: 14px 30px;
+  background: linear-gradient(90deg, #43a047, #66bb6a);
+  font-size: 1.1rem;
+}
+
+.menu-button {
+  width: 100%;
+  max-width: 500px;
+  padding: 16px;
+  margin: 12px auto;
+  font-size: 1.05rem;
+  display: block;
+  position: relative;
+  overflow: hidden;
+}
+
+.menu-button::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0.15);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s ease;
+}
+
+.menu-button:hover::after {
+  transform: scaleX(1);
+}
+
+/* SHAKING/BUBBLE EFFECT */
+@keyframes bubbleShake {
+  0% { transform: translate(0,0) rotate(0deg); }
+  25% { transform: translate(2px,-2px) rotate(-2deg); }
+  50% { transform: translate(-2px,2px) rotate(2deg); }
+  75% { transform: translate(1px,-1px) rotate(-1deg); }
+  100% { transform: translate(0,0) rotate(0deg); }
+}
+
+.menu-button:hover, .start-btn:hover, .reset-btn:hover {
+  animation: bubbleShake 0.6s infinite;
+  transform: scale(1.05);
+  box-shadow: 0 12px 25px rgba(0,0,0,0.3);
+}
+
+/* COLORS */
+.red { background: linear-gradient(90deg, #e53935, #ff7043); }
+.green { background: linear-gradient(90deg, #43a047, #66bb6a); }
+.orange { background: linear-gradient(90deg, #fb8c00, #fbc02d); }
+.yellow { background: linear-gradient(90deg, #fff176, #ffee58); color:#000; }
+.skyblue { background: linear-gradient(90deg, #29b6f6, #4fc3f7); }
+.violet { background: linear-gradient(90deg, #8e24aa, #ba68c8); }
+.pink { background: linear-gradient(90deg, #f06292, #ec407a); }
+.yellowgreen { background: linear-gradient(90deg, #9ccc65, #aed581); color:#000; }
+
+.reset-btn {
+  margin-top: 20px;
+  padding: 12px 26px;
+  background: linear-gradient(90deg, #d32f2f, #ef5350);
+  font-size: 1rem;
+}
+
+/* INTRO SCREEN */
+.intro-screen {
+  position: fixed;
+  inset: 0;
+  background: rgba(255,255,255,0.96);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+  padding: 20px;
+}
+
+.intro-screen h1 { font-size: 2rem; color: #2e3a59; margin-bottom: 10px; }
+.intro-text { font-size: 1rem; max-width: 600px; margin-bottom: 20px; }
+
+/* MAIN MENU */
+.container {
+  display: none;
+  width: 100%;
+  max-width: 950px;
+  background: rgba(255,255,255,0.95);
+  padding: 20px;
+  border-radius: var(--radius);
+  margin: 20px auto;
+  box-shadow: var(--shadow);
+  flex-direction: column;
+  align-items: center;
+}
+
+h1 { color: var(--text-dark); font-size: 1.8rem; margin-bottom: 10px; }
+h2 { font-size: 1.3rem; margin-top: 20px; }
+
+.progress-container { width: 100%; height: 14px; background:#ddd; border-radius:10px; margin-bottom:20px; overflow:hidden; }
+.progress-bar { height:100%; width:0%; background:linear-gradient(90deg, #43a047, #66bb6a); transition: width 0.4s ease; }
+
+/* MOBILE TEXT */
+@media (max-width: 480px) {
+  h1 { font-size: 1.6rem; }
+  h2 { font-size: 1.2rem; }
+  .intro-screen h1 { font-size: 1.8rem; }
+}
+</style>
+</head>
+
+<body>
+
+<!-- FLOATING ICONS -->
+<div id="iconContainer"></div>
+
+<!-- INTRO SCREEN -->
+<div class="intro-screen" id="intro">
+  <h1>Welcome to Gravome-Sepa! 🎉</h1>
+  <div class="intro-text" id="introText"></div>
+  <button class="start-btn" id="startGame">Start Game ▶</button>
+</div>
+
+<!-- MAIN MENU -->
+<div class="container" id="mainMenu">
+  <h1>Choose Your Lesson</h1>
+  <div class="progress-container">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+
+  <h2>Level 1</h2>
+  <a href="Synonyms word Groups.html" class="menu-button red" data-index="0">Synonyms Word Groups</a>
+  <a href="Antonyms word Groups.html" class="menu-button green locked" data-index="1">Antonyms Word Groups</a>
+  <a href="Antonyms.html" class="menu-button pink locked" data-index="2">Antonyms</a>
+  <a href="Synonyms.html" class="menu-button violet locked" data-index="3">Synonyms</a>
+
+  <h2>Level 2</h2>
+  <a href="Capitalization.html" class="menu-button orange locked" data-index="4">Capitalization</a>
+  <a href="Punctuation.html" class="menu-button yellow locked" data-index="5">Punctuation</a>
+  <a href="Spelling.html" class="menu-button pink locked" data-index="6">Spelling</a>
+
+  <h2>Level 3</h2>
+  <a href="Grammar.html" class="menu-button yellowgreen locked" data-index="7">Grammar</a>
+
+  <h2>Level 4</h2>
+  <a href="Sentence.html" class="menu-button skyblue locked" data-index="8">Sentence and Paragraph</a>
+
+  <button class="reset-btn" id="resetProgress">🔄 Reset Progress</button>
+</div>
+
+<!-- SOUND EFFECTS -->
+<audio id="tapSound" preload="auto"><source src="tap.mp3" type="audio/mpeg"></audio>
+<audio id="successSound" preload="auto"><source src="success.mp3" type="audio/mpeg"></audio>
+<audio id="resetSound" preload="auto"><source src="reset.mp3" type="audio/mpeg"></audio>
+
+<script>
+// ELEMENTS
+const intro = document.getElementById("intro");
+const mainMenu = document.getElementById("mainMenu");
+const introText = document.getElementById("introText");
+const startBtn = document.getElementById("startGame");
+const progressBar = document.getElementById("progressBar");
+const resetBtn = document.getElementById("resetProgress");
+const buttons = document.querySelectorAll(".menu-button");
+const iconContainer = document.getElementById("iconContainer");
+
+// AUDIO
+const tapSound = document.getElementById("tapSound");
+const successSound = document.getElementById("successSound");
+const resetSound = document.getElementById("resetSound");
+
+// FLOATING ICONS
+const icons = ['🅰️','🔤','✏️','📝','📚','🅱️','🔠','🖊️','🖍️','📖'];
+for(let i=0;i<20;i++){
+  let span = document.createElement('div');
+  span.className='floating-icon';
+  span.style.left=Math.random()*100+'vw';
+  span.style.top=Math.random()*100+'vh';
+  span.style.fontSize=(20+Math.random()*30)+'px';
+  span.style.animationDuration=(5+Math.random()*15)+'s';
+  span.textContent = icons[Math.floor(Math.random()*icons.length)];
+  iconContainer.appendChild(span);
+
+  // Animate movement
+  let x = Math.random()*window.innerWidth;
+  let y = Math.random()*window.innerHeight;
+  let dx = (Math.random()-0.5)*1.2;
+  let dy = (Math.random()-0.5)*1.2;
+  function move(){
+    x+=dx;
+    y+=dy;
+    if(x<0) x=window.innerWidth;
+    if(x>window.innerWidth) x=0;
+    if(y<0) y=window.innerHeight;
+    if(y>window.innerHeight) y=0;
+    span.style.left=x+'px';
+    span.style.top=y+'px';
+    requestAnimationFrame(move);
+  }
+  move();
+}
+
+// Enable audio
+function enableAudio(){
+  [tapSound, successSound, resetSound].forEach(a=>{
+    a.muted=false;
+    a.play().then(()=>{a.pause(); a.currentTime=0;}).catch(()=>{});
+  });
+  document.removeEventListener("touchstart", enableAudio);
+  document.removeEventListener("click", enableAudio);
+}
+document.addEventListener("touchstart", enableAudio, {once:true});
+document.addEventListener("click", enableAudio, {once:true});
+
+// PROGRESS
+let progress = parseInt(localStorage.getItem("progress")) || 0;
+
+// TYPEWRITER
+const introMessage = "✨ Get ready for a fun journey through words! Learn Synonyms, Antonyms, Grammar, and more while unlocking levels and completing challenges. 🎮";
+let charIndex=0;
+function typeWriter(){
+  if(charIndex<introMessage.length){
+    introText.textContent += introMessage[charIndex];
+    charIndex++;
+    setTimeout(typeWriter,30);
+  }
+}
+window.onload=typeWriter;
+
+// START GAME
+startBtn.addEventListener("click",()=>{
+  tapSound.currentTime=0; tapSound.play();
+  intro.style.display='none';
+  mainMenu.style.display='flex';
+});
+
+// UNLOCK LESSONS
+function unlockLessons(){
+  buttons.forEach((btn,idx)=>btn.classList.toggle("locked", idx>progress));
+  const percent=((progress+1)/buttons.length)*100;
+  progressBar.style.width=Math.min(percent,100)+'%';
+}
+
+// BUTTON LOGIC
+buttons.forEach((btn,idx)=>{
+  btn.addEventListener("click",(e)=>{
+    if(btn.classList.contains("locked")) return;
+    tapSound.currentTime=0; tapSound.play();
+    if(idx>=progress && idx<buttons.length-1){
+      progress=idx+1;
+      localStorage.setItem("progress",progress);
+      unlockLessons();
+      successSound.currentTime=0; successSound.play();
+    }
+  });
+});
+
+// RESET
+resetBtn.addEventListener("click",()=>{
+  tapSound.currentTime=0; tapSound.play();
+  if(confirm("Reset your progress?")){
+    progress=0;
+    localStorage.setItem("progress",progress);
+    unlockLessons();
+    resetSound.currentTime=0; resetSound.play();
+  }
+});
+
+unlockLessons();
+
+// OFFLINE SUPPORT
+if("serviceWorker" in navigator){
+  navigator.serviceWorker.register("sw.js").then(()=>console.log("SW Registered")).catch(err=>console.log("SW Failed:",err));
+}
+</script>
+</body>
+</html>
+
+
+

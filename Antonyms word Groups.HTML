@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Antonyms Voice Game</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  font-family:'Poppins',sans-serif;
+  background:url('https://images.unsplash.com/photo-1496307042754-b4aa456c4a2d?auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
+  color:#2d1758;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:100vh;
+}
+.overlay{position:fixed;inset:0;background:rgba(255,255,255,0.85);backdrop-filter:blur(6px);z-index:-1;}
+.app{
+  background:#fff;border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,0.12);
+  max-width:900px;width:95%;padding:30px;animation:fadeIn .8s ease;
+}
+h1{text-align:center;color:#5a2ca0;margin-bottom:10px;}
+p.lead{text-align:center;color:#4a3a72;margin-bottom:18px;}
+button{
+  background:linear-gradient(90deg,#6b21a8,#9333ea);border:none;border-radius:10px;
+  color:#fff;font-weight:600;padding:12px 22px;
+  cursor:pointer;font-size:16px;transition:.25s;
+}
+button:hover{background:linear-gradient(90deg,#7e22ce,#a855f7);}
+button:disabled{opacity:.6;cursor:not-allowed;}
+#introPage{text-align:center;}
+#introPage ul{text-align:left;max-width:600px;margin:20px auto;padding-left:20px;color:#4a3a72;}
+#introPage li{margin-bottom:6px;}
+#gamePage{display:none;text-align:center;}
+.score,.progress{font-weight:700;font-size:18px;margin-bottom:10px;}
+.score{color:#fbbf24;}
+.progress{color:#6b21a8;}
+.wordContainer{display:flex;justify-content:center;gap:24px;margin:20px 0;}
+.wordBox{
+  background:#f4edff;padding:18px 28px;border-radius:14px;
+  font-size:28px;font-weight:700;color:#4b1e7a;
+  box-shadow:0 4px 12px rgba(107,33,148,0.1);
+  min-width:120px;text-align:center;
+}
+.controls{margin-top:12px;}
+.feedback{text-align:center;font-weight:700;font-size:16px;min-height:30px;margin-top:16px;}
+.feedback.ok{color:#16a34a;}
+.feedback.bad{color:#ef4444;}
+.end{display:none;background:#faf5ff;border-radius:10px;margin-top:16px;padding:12px;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+</style>
+</head>
+<body>
+<div class="overlay"></div>
+
+<!-- INTRO -->
+<div class="app" id="introPage">
+  <h1>🎓 Antonyms Voice Game</h1>
+  <p class="lead">Practice pronunciation and learn antonyms in a fun interactive way!</p>
+  <ul>
+    <li>🎧 Allow microphone access.</li>
+    <li>🎯 Say the word shown on screen.</li>
+    <li>❌ Wrong = repeat the same word.</li>
+    <li>✅ Correct = auto next word.</li>
+  </ul>
+  <button id="startBtn">Start Game</button>
+</div>
+
+<!-- GAME -->
+<div class="app" id="gamePage">
+
+  <div class="score" id="score">⭐ 0</div>
+  <div class="progress" id="progress"></div>
+
+  <div class="wordContainer">
+    <div class="wordBox" id="word1"></div>
+    <div class="wordBox" id="word2"></div>
+  </div>
+
+  <div class="controls">
+    <button id="listenBtn" disabled>🎙 Say Word</button>
+  </div>
+
+  <div class="feedback" id="feedback"></div>
+
+  <div class="end" id="endArea">
+    <div id="endTitle"></div>
+    <div id="endMessage"></div>
+    <button id="replayBtn">Play Again</button>
+  </div>
+</div>
+
+<script>
+/* ---------------------------
+   DATA
+--------------------------- */
+const wordPairs=[
+ ["loud","quiet"],["early","late"],["big","small"],["bright","dark"],
+ ["strong","weak"],["near","far"],["hot","cold"],["tall","short"],
+ ["easy","difficult"],["young","old"]
+];
+
+let pairIndex=0, wordIndex=0, score=0;
+let recognition=null, accepting=false;
+
+/* ---------------------------
+   ELEMENTS
+--------------------------- */
+const introPage=document.getElementById('introPage');
+const gamePage=document.getElementById('gamePage');
+const scoreEl=document.getElementById('score');
+const progressEl=document.getElementById('progress');
+const word1El=document.getElementById('word1');
+const word2El=document.getElementById('word2');
+const listenBtn=document.getElementById('listenBtn');
+const feedback=document.getElementById('feedback');
+const endArea=document.getElementById('endArea');
+const endTitle=document.getElementById('endTitle');
+const endMessage=document.getElementById('endMessage');
+const replayBtn=document.getElementById('replayBtn');
+const startBtn=document.getElementById('startBtn');
+
+/* ---------------------------
+   UTILS
+--------------------------- */
+function clean(text){
+  return text.toLowerCase().replace(/[^a-z]/g,'').trim();
+}
+
+function updateScore(){
+  scoreEl.textContent="⭐ "+score;
+}
+
+function showPair(){
+  const pair=wordPairs[pairIndex];
+  word1El.textContent=pair[0];
+  word2El.textContent=pair[1];
+  feedback.textContent=`Say: "${pair[wordIndex]}"`;
+  feedback.className="feedback";
+  progressEl.textContent=`Pair ${pairIndex+1}/${wordPairs.length} • Word ${wordIndex+1}/2`;
+  listenBtn.disabled=false;
+  accepting=true;
+}
+
+/* ---------------------------
+   SPEECH SETUP
+--------------------------- */
+function setupRecognition(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){
+    feedback.textContent="⚠ Speech recognition not supported. Use Google Chrome.";
+    listenBtn.disabled=true;
+    return;
+  }
+
+  recognition = new SR();
+  recognition.lang="en-US";
+  recognition.interimResults=false;
+  recognition.maxAlternatives=3;
+
+  recognition.onstart = ()=> feedback.textContent="🎧 Listening...";
+
+  recognition.onresult = e=>{
+    const spoken = clean(e.results[0][0].transcript);
+    processSpoken(spoken);
+  };
+
+  recognition.onerror = ()=>{
+    feedback.textContent="⚠ Didn't catch that. Try again.";
+    accepting=true;
+  };
+}
+
+/* ---------------------------
+   CHECK ANSWER
+--------------------------- */
+function processSpoken(spoken){
+  if(!accepting) return;
+  accepting=false;
+
+  const target = clean(wordPairs[pairIndex][wordIndex]);
+
+  if(spoken === target){
+    // CORRECT
+    feedback.textContent = `✅ Correct! "${spoken}"`;
+    feedback.className="feedback ok";
+    score++;
+    updateScore();
+
+    setTimeout(()=>{
+      wordIndex++;
+      if(wordIndex >= 2){
+        pairIndex++;
+        wordIndex = 0;
+        if(pairIndex >= wordPairs.length){
+          endGame();
+          return;
+        }
+      }
+      showPair();
+    },800);
+
+  } else {
+    // WRONG → REPEAT SAME WORD
+    feedback.textContent = `❌ "${spoken}" is wrong. Say "${target}" again.`;
+    feedback.className="feedback bad";
+    accepting=true;
+  }
+}
+
+/* ---------------------------
+   END GAME
+--------------------------- */
+function endGame(){
+  listenBtn.disabled=true;
+  endArea.style.display="block";
+  endTitle.textContent="🎉 Great Job!";
+  endMessage.textContent=`You earned ${score} ⭐ total.`;
+}
+
+/* ---------------------------
+   EVENTS
+--------------------------- */
+startBtn.addEventListener('click',()=>{
+  introPage.style.display="none";
+  gamePage.style.display="block";
+  pairIndex=0; wordIndex=0; score=0;
+  updateScore();
+  setupRecognition();
+  showPair();
+});
+
+listenBtn.addEventListener('click',()=>{
+  if(recognition) recognition.start();
+});
+
+replayBtn.addEventListener('click',()=>{
+  endArea.style.display="none";
+  pairIndex=0; wordIndex=0; score=0;
+  updateScore();
+  showPair();
+});
+</script>
+</body>
+</html>

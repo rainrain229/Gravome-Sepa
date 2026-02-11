@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Story Activities</title>
+<style>
+body { font-family: Arial, sans-serif; background: #fefae0; text-align: center; padding: 30px; }
+h2 { color: #333; margin-bottom: 20px; }
+
+/* Buttons */
+button {
+  padding: 12px 25px; font-size: 16px; background: #2a9d8f; color: white; border: none; border-radius: 10px;
+  cursor: pointer; margin-top: 15px; transition: transform 0.2s;
+}
+button:hover { transform: scale(1.05); background: #21867a; }
+button:active { animation: pop 0.3s ease; }
+
+/* Story section */
+#storyText { font-size: 18px; max-width: 800px; margin: 0 auto 20px auto; line-height: 1.6; }
+
+/* Activity 1 */
+#sentence-container { display: flex; flex-direction: column; align-items: center; gap: 12px; margin: 20px auto; max-width: 700px; }
+.sentence {
+  padding: 12px 20px; background: #d4f1f4; border: 2px solid #0077b6; border-radius: 10px; cursor: grab; width: 100%; text-align: left;
+  animation: bounceIn 0.8s ease forwards;
+}
+.sentence:hover { transform: scale(1.05); box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: 0.2s; }
+
+/* Activity 2 */
+.jumbled-container { display: flex; justify-content: center; flex-wrap: wrap; gap: 15px; margin: 20px 0; }
+.word-box {
+  background: #ffffff; border: 2px solid #4a90e2; border-radius: 12px; padding: 18px; font-size: 18px;
+  font-weight: bold; display: flex; justify-content: center; align-items: center;
+  cursor: grab; animation: wordSlideIn 0.6s ease forwards;
+}
+.word-box:hover { transform: scale(1.05); box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: 0.2s; }
+
+input[type="text"] { width: 70%; padding: 12px; font-size: 18px; border-radius: 8px; border: 2px dashed #0077cc; margin-bottom: 10px; }
+
+/* Result & animation */
+#result, #final-score, #timer { font-weight: bold; margin-top: 20px; font-size: 18px; transition: color 0.3s, transform 0.3s; }
+.correct { color: green; transform: scale(1.2); animation: glow 1s ease-in-out; }
+.incorrect { color: red; transform: scale(1.1); animation: shake 0.3s; }
+
+/* Timer */
+#timer { color:#e76f51; }
+
+/* Animations */
+@keyframes fadeInUp { 0% { opacity: 0; transform: translateY(30px); } 100% { opacity: 1; transform: translateY(0); } }
+@keyframes bounceIn { 0% { transform: scale(0.3); opacity:0; } 50% { transform: scale(1.05); opacity:1; } 70% { transform: scale(0.95); } 100% { transform: scale(1); } }
+@keyframes wordSlideIn { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
+@keyframes glow { 0% { box-shadow:0 0 5px #fff; } 50% { box-shadow:0 0 20px #ffd700; } 100% { box-shadow:0 0 5px #fff; } }
+@keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+@keyframes shake { 0%,100%{ transform: translateX(0);} 25%{transform:translateX(-5px);}50%{transform:translateX(5px);}75%{transform:translateX(-5px);} }
+
+/* Hide sections initially */
+#activity1, #activity2 { display: none; }
+</style>
+</head>
+<body>
+
+<!-- INTRO INSTRUCTION -->
+<div id="storySection">
+  <h2>📖 Welcome!</h2>
+  <p id="storyText"></p>
+  <p>Instructions: Read the story carefully. Then complete the activities by arranging sentences and building sentences correctly. You have <strong>20 seconds</strong> per sentence in Activity 2. If time runs out, the next sentence will automatically appear.</p>
+  <button id="startBtn">Start Activities</button>
+</div>
+
+<!-- ACTIVITY 1 -->
+<div id="activity1">
+  <h2>🧩 Arrange the Sentences (Stage <span id="stageNum">1</span>/3)</h2>
+  <div id="sentence-container"></div>
+  <button onclick="checkOrder()">Check Answer</button>
+  <p id="result"></p>
+</div>
+
+<!-- ACTIVITY 2 -->
+<div id="activity2">
+  <h2>✍ Build a Sentence (Stage <span id="sentenceStage">1</span>/5)</h2>
+  <div class="jumbled-container" id="wordBoxContainer"></div>
+  <input type="text" id="userSentence" placeholder="Type the complete sentence here..." />
+  <br>
+  <button onclick="checkSentence()">Check</button>
+  <div id="timer"></div>
+  <div id="final-score"></div>
+  <p id="result"></p>
+</div>
+
+<!-- SOUND EFFECTS -->
+<audio id="correctSound" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
+<audio id="wrongSound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
+
+<script>
+const story = {
+  text: "Alice was an adventurous girl living in a small village near the mountains. Every morning, she would wake up early and watch the sunrise. One day, she decided to explore the forest beyond the river. She packed her backpack with snacks, water, and a map. The birds chirped as she walked along the winding paths. Suddenly, she heard a rustle behind the bushes and discovered a hidden waterfall. Amazed by the beauty, she took photos and carefully noted the route. Later, she met a group of travelers who shared stories of distant lands. Alice listened carefully, inspired to plan her next adventure. Finally, she returned home tired but happy, eager to write in her journal about the day's journey.",
+  
+  paragraphs: [
+    ["Alice was an adventurous girl living in a small village near the mountains.", "Every morning, she would wake up early and watch the sunrise.", "One day, she decided to explore the forest beyond the river.", "She packed her backpack with snacks, water, and a map."],
+    ["The birds chirped as she walked along the winding paths.", "Suddenly, she heard a rustle behind the bushes.", "She discovered a hidden waterfall.", "Amazed by the beauty, she took photos and carefully noted the route."],
+    ["Later, she met a group of travelers who shared stories of distant lands.", "Alice listened carefully.", "She was inspired to plan her next adventure.", "Finally, she returned home tired but happy."]
+  ],
+  
+  sentences: [
+    {words:["Alice","was","an","adventurous","girl","living","in","a","small","village","near","the","mountains"], correct:"Alice was an adventurous girl living in a small village near the mountains."},
+    {words:["She","packed","her","backpack","with","snacks","water","and","a","map"], correct:"She packed her backpack with snacks, water, and a map."},
+    {words:["She","discovered","a","hidden","waterfall"], correct:"She discovered a hidden waterfall."},
+    {words:["Alice","listened","carefully"], correct:"Alice listened carefully."},
+    {words:["Finally","she","returned","home","tired","but","happy"], correct:"Finally she returned home tired but happy."}
+  ]
+};
+
+let stageIndex=0, sentenceIndex=0, dragging;
+let timerInterval, timeLeft;
+
+// ================= STORY DISPLAY =================
+const storyText = document.getElementById("storyText");
+const startBtn = document.getElementById("startBtn");
+storyText.textContent = story.text;
+
+startBtn.addEventListener("click", ()=>{
+  document.getElementById("storySection").style.display="none";
+  document.getElementById("activity1").style.display="block";
+  loadParagraph();
+});
+
+// ================= ACTIVITY 1 =================
+function loadParagraph(){
+  document.getElementById("stageNum").textContent = stageIndex+1;
+  const container = document.getElementById("sentence-container");
+  container.innerHTML="";
+  document.getElementById("result").textContent="";
+  const shuffled = shuffle([...story.paragraphs[stageIndex]]);
+  shuffled.forEach(text=>{
+    const div = document.createElement("div");
+    div.className="sentence";
+    div.textContent=text;
+    div.draggable=true;
+    div.addEventListener("dragstart", ()=> dragging = div);
+    div.addEventListener("dragover", e=> e.preventDefault());
+    div.addEventListener("drop", e=>{
+      e.preventDefault();
+      if(dragging && dragging!==div){
+        [dragging.textContent, div.textContent] = [div.textContent, dragging.textContent];
+      }
+    });
+    container.appendChild(div);
+  });
+}
+
+function checkOrder(){
+  const user = Array.from(document.querySelectorAll(".sentence")).map(el=>el.textContent);
+  const correct = story.paragraphs[stageIndex];
+  const result = document.getElementById("result");
+  if(user.every((t,i)=>t===correct[i])){
+    result.textContent="✅ Correct!";
+    result.className="correct";
+    document.getElementById("correctSound").play();
+    stageIndex++;
+    if(stageIndex<story.paragraphs.length){
+      setTimeout(loadParagraph, 1000);
+    } else {
+      document.getElementById("activity1").innerHTML = `<h2>🎉 Activity 1 Complete!</h2><button onclick="startActivity2()">Next Activity</button>`;
+    }
+  } else {
+    result.textContent="❌ Try again!";
+    result.className="incorrect";
+    document.getElementById("wrongSound").play();
+  }
+}
+
+// ================= ACTIVITY 2 =================
+function startActivity2(){
+  document.getElementById("activity1").style.display="none";
+  document.getElementById("activity2").style.display="block";
+  sentenceIndex=0;
+  loadSentence();
+}
+
+function loadSentence(){
+  clearInterval(timerInterval);
+  timeLeft=20;
+  document.getElementById("timer").textContent = `⏱️ Time left: ${timeLeft}s`;
+  timerInterval = setInterval(()=>{
+    timeLeft--;
+    document.getElementById("timer").textContent = `⏱️ Time left: ${timeLeft}s`;
+    if(timeLeft<=0){
+      clearInterval(timerInterval);
+      autoFailAndNext();
+    }
+  },1000);
+
+  document.getElementById("sentenceStage").textContent = sentenceIndex+1;
+  const container = document.getElementById("wordBoxContainer");
+  container.innerHTML="";
+  document.getElementById("userSentence").value="";
+  document.getElementById("result").textContent="";
+  const shuffled = shuffle([...story.sentences[sentenceIndex].words]);
+  shuffled.forEach(word=>{
+    const box = document.createElement("div");
+    box.className="word-box";
+    box.textContent=word;
+    container.appendChild(box);
+  });
+}
+
+function checkSentence(){
+  clearInterval(timerInterval);
+  const input = document.getElementById("userSentence").value.trim();
+  const result = document.getElementById("result");
+  if(input.toLowerCase()===story.sentences[sentenceIndex].correct.toLowerCase()){
+    result.textContent="✅ Correct!";
+    result.className="correct";
+    document.getElementById("correctSound").play();
+    setTimeout(loadNextSentence, 1000);
+  } else {
+    result.textContent="❌ Incorrect. Try again.";
+    result.className="incorrect";
+    document.getElementById("wrongSound").play();
+  }
+}
+
+function autoFailAndNext(){
+  const result = document.getElementById("result");
+  result.textContent="❌ Time's up! Moving to next sentence.";
+  result.className="incorrect";
+  document.getElementById("wrongSound").play();
+  setTimeout(loadNextSentence, 1500);
+}
+
+function loadNextSentence(){
+  sentenceIndex++;
+  if(sentenceIndex<story.sentences.length){
+    loadSentence();
+  } else {
+    document.getElementById("activity2").innerHTML=`<h2>🎉 All Activities Complete!</h2><p>Well done!</p>`;
+  }
+}
+
+// ================= SHUFFLE =================
+function shuffle(array){for(let i=array.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[array[i],array[j]]=[array[j],array[i]];} return array;}
+</script>
+</body>
+</html>
+

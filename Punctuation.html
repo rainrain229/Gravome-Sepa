@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎮 Punctuation Master Challenge</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+/* --- BODY & BACKGROUND --- */
+body {
+  margin:0;
+  padding:0;
+  font-family:'Poppins',sans-serif;
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background: linear-gradient(135deg, #c8e0f6, #e8d0f2);
+  overflow:hidden;
+  position:relative;
+}
+
+/* --- BACKGROUND SHAPES --- */
+.bg-shape {
+  position: fixed;
+  border-radius: 50%;
+  opacity:0.15;
+  filter:blur(50px);
+  z-index:-1;
+  animation: float 8s infinite ease-in-out alternate;
+}
+.bg1 { background:#b3cde0; width:300px; height:300px; top:10%; left:10%; }
+.bg2 { background:#d5b3e0; width:250px; height:250px; bottom:15%; right:15%; animation-delay:2s; }
+@keyframes float { from { transform:translateY(0px); } to { transform:translateY(30px); } }
+
+/* --- CLOUDS --- */
+.cloud {
+  position:absolute;
+  background: radial-gradient(ellipse at center, #fff 60%, rgba(255,255,255,0) 100%);
+  border-radius:50%;
+  width:120px;
+  height:60px;
+  opacity:0.8;
+  animation: cloudMove linear infinite;
+}
+.cloud:nth-of-type(1){ top:50px; left:-150px; animation-duration:80s;}
+.cloud:nth-of-type(2){ top:100px; left:-200px; animation-duration:100s;}
+.cloud:nth-of-type(3){ top:180px; left:-100px; animation-duration:60s;}
+@keyframes cloudMove{0%{transform:translateX(0);}100%{transform:translateX(1200px);}}
+
+/* --- CARD --- */
+.card {
+  background:#fff;
+  width:90%;
+  max-width:900px;
+  padding:30px;
+  border-radius:25px;
+  box-shadow:0 15px 40px rgba(0,0,0,0.25);
+  text-align:center;
+  position:relative;
+  z-index:10;
+}
+
+/* --- HEADINGS --- */
+h1,h2 { color:#7b1fa2; margin:15px 0; }
+
+/* --- BUTTONS --- */
+button {
+  padding:12px 20px;
+  border:none;
+  border-radius:25px;
+  background:#7b1fa2;
+  color:#fff;
+  font-size:16px;
+  cursor:pointer;
+  margin:5px;
+  transition:0.3s;
+  position:relative;
+  overflow:hidden;
+}
+button:hover{ background:#4a148c; transform:scale(1.05); }
+button::before, button::after{
+  content:'';
+  position:absolute;
+  width:8px;
+  height:8px;
+  background:rgba(255,255,255,0.6);
+  border-radius:50%;
+  top:50%; left:50%;
+  transform:translate(-50%,-50%) scale(0);
+  opacity:0;
+  transition:0.3s;
+}
+button:hover::before{ transform:translate(-150%,-150%) scale(1); opacity:1; }
+button:hover::after{ transform:translate(150%,-150%) scale(1); opacity:1; }
+
+/* --- FEEDBACK & SCORE --- */
+#feedback{ font-size:20px; font-weight:600; margin-top:10px; text-align:center; }
+#timer,#score,#finalScore{ font-size:18px; margin:10px 0; text-align:center; }
+
+/* --- CHOICE BUTTONS --- */
+.choice-container{ display:flex; flex-wrap:wrap; justify-content:center; margin:15px 0; }
+.choice-btn{ background:#e1bee7; color:#7b1fa2; padding:12px 18px; margin:5px; border-radius:15px; border:2px solid #7b1fa2; cursor:pointer; font-size:20px; min-width:50px; transition:0.3s; }
+.choice-btn:hover{ background:#d1c4e9; transform:scale(1.05); }
+
+/* --- SLOTS --- */
+.slot{
+  display:inline-block; width:50px; height:50px; border-radius:8px;
+  background:#f3e5f5; color:#7b1fa2; font-size:22px; text-align:center; line-height:50px;
+  margin:5px; border:2px solid #7b1fa2; cursor:pointer; transition:0.3s;
+}
+.slot.disabled{ opacity:0.5; cursor:not-allowed; }
+.slot.current{ border:3px solid #ff4081; transform:scale(1.1); }
+
+/* --- HOME & NEXT BUTTONS --- */
+#homeBtn, #nextBtn button{ display:inline-block; }
+</style>
+</head>
+<body>
+
+<!-- BACKGROUND SHAPES & CLOUDS -->
+<div class="bg-shape bg1"></div>
+<div class="bg-shape bg2"></div>
+<div class="cloud"></div>
+<div class="cloud"></div>
+<div class="cloud"></div>
+
+<div class="card" id="container">
+
+  <!-- HOME BUTTON -->
+  <button id="homeBtn" style="display:none;">🏠 Home</button>
+
+  <!-- INSTRUCTIONS -->
+  <div id="instructions">
+    <h1>🎮 Punctuation Master Challenge</h1>
+    <h2>📘 How to Answer</h2>
+    <ul style="text-align:left; display:inline-block;">
+      <li>Read the sentence carefully.</li>
+      <li>Click the correct punctuation for each blank (<b>___</b>).</li>
+      <li>Click "Start Timer" to begin your 25-second countdown.</li>
+      <li>You cannot answer until the timer is started.</li>
+    </ul>
+    <p><b>Choices:</b> . , ? ! ; : - ' "</p>
+    <button onclick="startGame()">▶ Start Game</button>
+  </div>
+
+  <!-- GAME AREA -->
+  <div id="game" style="display:none;">
+    <h2 id="counter"></h2>
+    <p id="sentence"></p>
+    <div id="slots" style="margin:20px 0;"></div>
+    <div id="timer">⏰ Time: 25</div>
+    <button id="startTimerBtn" onclick="startTimer()">⏳ Start Timer</button>
+    <div id="feedback"></div>
+    <p id="score"></p>
+  </div>
+
+  <!-- RESULT -->
+  <div id="result" style="display:none;">
+    <h1>🎉 Challenge Complete!</h1>
+    <p id="finalScore"></p>
+    <!-- NEXT GAME LINK -->
+    <a href="Spelling.html" id="nextBtn" style="display:none; text-decoration:none;">
+      <button>➡ Next Game</button>
+    </a>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+<script>
+const choices=[".",",","?","!",";"," :", "-","'", "\""];
+const questions=[
+  {text:"Wow ___ that performance was breathtaking ___ truly unforgettable ___", answers:["!","!","!"]},
+  {text:"Did you complete the homework ___ before class ___ and submit it ___", answers:["?","?","."]},
+  {text:"After the discussion ___ the teacher said ___ 'Excellent work!' ___", answers:[",","'","!"]},
+  {text:"Remember to bring your tools ___ notebook ___ pen ___ ruler ___ and calculator ___", answers:[",",",",",","."]},
+  {text:"Although it rained heavily ___ the event continued ___ everyone was excited ___", answers:[",",".","!"]}
+];
+
+let currentIndex=0, score=0, totalBlanks=0, timer=25, timerInterval;
+let timerRunning=false, userAnswers=[], currentBlank=null;
+
+const instructions = document.getElementById("instructions");
+const game = document.getElementById("game");
+const result = document.getElementById("result");
+const homeBtn = document.getElementById("homeBtn");
+const nextBtn = document.getElementById("nextBtn");
+
+function startGame(){
+  instructions.style.display="none";
+  game.style.display="block";
+  homeBtn.style.display="inline-block";
+  loadQuestion();
+}
+
+function loadQuestion(){
+  clearInterval(timerInterval);
+  timer=25; timerRunning=false; userAnswers=[]; currentBlank=null;
+  document.getElementById("feedback").textContent="";
+  document.getElementById("startTimerBtn").disabled=false;
+  const q=questions[currentIndex];
+  document.getElementById("counter").textContent=`Question ${currentIndex+1} of ${questions.length}`;
+  document.getElementById("sentence").innerHTML=q.text.replace(/___/g,"<b>___</b>");
+  const slotsDiv=document.getElementById("slots");
+  slotsDiv.innerHTML="";
+  q.answers.forEach((_,i)=>{
+    const slotDiv=document.createElement("div");
+    slotDiv.className="slot disabled";
+    slotDiv.dataset.index=i;
+    slotDiv.textContent="___";
+    slotDiv.onclick=()=>selectBlank(i);
+    slotsDiv.appendChild(slotDiv);
+  });
+  document.getElementById("score").textContent=`⭐ Score: ${score} / ${totalBlanks}`;
+  document.getElementById("timer").textContent=`⏰ Time: ${timer}`;
+}
+
+function selectBlank(i){
+  if(!timerRunning) return;
+  currentBlank=i;
+  const slots=document.querySelectorAll(".slot");
+  slots.forEach(s=>s.classList.remove("current"));
+  slots[i].classList.add("current");
+  renderChoices();
+}
+
+function renderChoices(){
+  const old=document.getElementById("choicesContainer");
+  if(old) old.remove();
+  const div=document.createElement("div");
+  div.className="choice-container";
+  div.id="choicesContainer";
+  choices.forEach(c=>{
+    const btn=document.createElement("button");
+    btn.className="choice-btn";
+    btn.textContent=c;
+    btn.onclick=()=>chooseAnswer(c.trim());
+    div.appendChild(btn);
+  });
+  document.getElementById("slots").parentNode.insertBefore(div, document.getElementById("slots").nextSibling);
+}
+
+function chooseAnswer(choice){
+  const q=questions[currentIndex];
+  const slots=document.querySelectorAll(".slot");
+  if(currentBlank===null){
+    // Automatically wrong for clicking without selecting slot
+    document.getElementById("feedback").textContent="❌ You must select a blank first!";
+    document.getElementById("feedback").style.color="#e53935";
+    return;
+  }
+  slots[currentBlank].textContent=choice;
+  userAnswers[currentBlank]=choice;
+  slots[currentBlank].classList.remove("current");
+  currentBlank=null;
+  document.getElementById("choicesContainer").remove();
+  if(userAnswers.length===q.answers.length && userAnswers.every(a=>a)) submitAnswer();
+}
+
+function startTimer(){
+  if(timerRunning) return;
+  timerRunning=true;
+  document.getElementById("startTimerBtn").disabled=true;
+  const slots=document.querySelectorAll(".slot");
+  slots.forEach(s=>s.classList.remove("disabled"));
+  timerInterval=setInterval(()=>{
+    timer--;
+    document.getElementById("timer").textContent=`⏰ Time: ${timer}`;
+    if(timer<=0){ clearInterval(timerInterval); submitAnswer(true); }
+  },1000);
+}
+
+function submitAnswer(timeout=false){
+  clearInterval(timerInterval);
+  const q=questions[currentIndex];
+  const slots=document.querySelectorAll(".slot");
+  slots.forEach((s,i)=>{
+    totalBlanks++;
+    if(userAnswers[i]===q.answers[i]){s.style.background="#c8e6c9"; score++;} else s.style.background="#ffcdd2";
+  });
+  if(!timeout){
+    const correct = userAnswers.every((a,i)=>a===q.answers[i]);
+    document.getElementById("feedback").textContent = correct ? "✅ Correct!" : "❌ Some incorrect!";
+    document.getElementById("feedback").style.color = correct ? "#4caf50" : "#e53935";
+    if(correct) confetti({particleCount:50, spread:70, origin:{y:0.6}});
+  } else {
+    document.getElementById("feedback").textContent="⏱ Time's up!";
+    document.getElementById("feedback").style.color="#e53935";
+  }
+  document.getElementById("score").textContent=`⭐ Score: ${score} / ${totalBlanks}`;
+  setTimeout(()=>{
+    currentIndex++;
+    if(currentIndex<questions.length) loadQuestion();
+    else endGame();
+  },2000);
+}
+
+function endGame(){
+  game.style.display="none";
+  result.style.display="block";
+  homeBtn.style.display="none";
+  nextBtn.style.display="inline-block";
+  let percentage = Math.round((score/totalBlanks)*100);
+  let rating="";
+  if(percentage>=90) rating="🏆 Excellent!";
+  else if(percentage>=70) rating="🎖 Good Job!";
+  else rating="⚠ Try Again!";
+  document.getElementById("finalScore").innerHTML=
+    `You scored ${score} out of ${totalBlanks} <br>Percentage: ${percentage}% <br>${rating}`;
+}
+
+// HOME BUTTON
+homeBtn.addEventListener('click', ()=>{
+  game.style.display="none";
+  result.style.display="none";
+  instructions.style.display="block";
+  homeBtn.style.display="none";
+  nextBtn.style.display="none";
+  score=0; totalBlanks=0; currentIndex=0;
+});
+</script>
+
+</body>
+</html>
+

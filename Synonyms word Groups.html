@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>GRAVOME-SEPA Voice Game</title>
+
+<style>
+/* BODY & BACKGROUND */
+body {
+  margin:0;
+  font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  min-height:100vh;
+  overflow:hidden;
+  background: linear-gradient(to top, #87CEFA 0%, #F0F8FF 100%);
+  position:relative;
+}
+
+/* CLOUDS */
+.cloud {
+  position:absolute;
+  background: radial-gradient(ellipse at center, #fff 60%, rgba(255,255,255,0) 100%);
+  border-radius:50%;
+  width:120px;
+  height:60px;
+  opacity:0.8;
+  animation: cloudMove linear infinite;
+}
+.cloud:nth-of-type(1){ top:50px; left:-150px; animation-duration:80s;}
+.cloud:nth-of-type(2){ top:100px; left:-200px; animation-duration:100s;}
+.cloud:nth-of-type(3){ top:180px; left:-100px; animation-duration:60s;}
+@keyframes cloudMove {0%{transform:translateX(0);}100%{transform:translateX(1200px);}}
+
+/* SPARKLES */
+.sparkle {
+  position:absolute;
+  width:6px; height:6px;
+  background:yellow;
+  border-radius:50%;
+  opacity:0.8;
+  animation: sparkleAnim linear infinite;
+}
+@keyframes sparkleAnim {
+  0% { transform:translateY(0) scale(1); opacity:0.8;}
+  50% { opacity:0.3;}
+  100% { transform:translateY(400px) scale(0.5); opacity:0;}
+}
+
+/* APP PANEL */
+.app {
+  width: 95%;
+  max-width: 980px;
+  background: rgba(255,255,255,0.95);
+  padding: 24px;
+  border-radius: 16px;
+  text-align: center;
+  box-shadow: 0 12px 36px rgba(99,39,146,0.08);
+  position:relative;
+  z-index:10;
+}
+
+h1{color:#6b21a8;margin-bottom:6px;font-size:22px;}
+.panel{background:linear-gradient(180deg,#fff,#fbf7ff);padding:16px;border-radius:14px;margin-bottom:12px;box-shadow:0 8px 18px rgba(107,33,148,0.04);}
+.wordBig{font-size:38px;color:#a855f7;min-height:58px;margin:10px 0 6px;}
+.controls{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:10px;}
+button{padding:10px 16px;border:none;border-radius:12px;font-weight:700;cursor:pointer;background:#a855f7;color:#fff;transition:.18s;font-size:14px;position:relative;overflow:hidden;}
+button:hover{background:#6b21a8;}
+button:disabled{opacity:.5;cursor:not-allowed;}
+.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:12px;}
+.chip{background:#f2e9ff;padding:8px 12px;border-radius:18px;font-weight:700;color:#4b1e7a;}
+.chip.correct{background:#bbf7d0;color:#14532d;}
+.chip.missed{background:#fecaca;color:#7f1d1d;}
+.feedback{margin-top:12px;min-height:28px;font-weight:700;}
+.feedback.ok{color:#16a34a;}
+.feedback.bad{color:#ef4444;}
+
+/* SCENE */
+.scene{position:relative;width:100%;height:300px;display:flex;justify-content:center;align-items:flex-start;margin-top:12px;background:linear-gradient(#ade6ff, #ffffff);border-radius:16px;}
+.hook{position:absolute;top:0;left:50%;transform:translateX(-50%);width:50px;height:15px;background:#a78bfa;border-radius:6px;text-align:center;line-height:15px;color:white;font-weight:700;font-size:12px;}
+.rope{position:absolute;top:15px;left:50%;transform:translateX(-50%);width:4px;height:120px;background:linear-gradient(#cfc0ff,#e6dbff);border-radius:2px;}
+.personWrap{position:absolute;top:135px;left:50%;transform:translateX(-50%);width:120px;height:160px;display:flex;justify-content:center;align-items:flex-start;transition:transform 0.4s;}
+.personHit{animation:personBounce .42s ease forwards;}
+@keyframes personBounce{0%{transform:translateY(0);}30%{transform:translateY(-16px) rotate(-6deg);}60%{transform:translateY(8px) rotate(6deg);}100%{transform:translateY(0) rotate(0);}}
+.ball{position:absolute;width:42px;height:42px;border-radius:50%;background:#f97316;display:none;right:12px;top:12px;}
+.ball.fly{animation:flyBall .52s cubic-bezier(.2,.8,.2,1) forwards;}
+@keyframes flyBall{0%{transform:translate(0,0) scale(1);opacity:1;}60%{transform:translate(-140px,100px) rotate(40deg) scale(1.05);}100%{transform:translate(-160px,120px) rotate(80deg) scale(0.98);}}
+
+/* END AREA */
+.end{display:none;margin-top:12px;padding:14px;border-radius:12px;background:#faf5ff;color:#4b1e7a;}
+
+/* BUTTONS & BUBBLES */
+.bubbleBtn {
+  background:#a855f7;
+  color:#fff;
+  padding:8px 16px;
+  border:none;
+  border-radius:12px;
+  font-weight:700;
+  margin:6px;
+  cursor:pointer;
+  position:relative;
+  overflow:hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.bubbleBtn:hover {
+  transform: translateY(-4px) scale(1.05);
+  box-shadow: 0 8px 16px rgba(168,85,247,0.4);
+  animation: bubbleAnim 0.6s ease;
+}
+
+@keyframes bubbleAnim {
+  0% { transform: translateY(0) scale(1); }
+  25% { transform: translateY(-6px) scale(1.05); }
+  50% { transform: translateY(-3px) scale(1.03); }
+  75% { transform: translateY(-6px) scale(1.05); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+/* Floating Bubbles around button */
+.bubbleBtn::before, .bubbleBtn::after {
+  content:'';
+  position:absolute;
+  width:8px;
+  height:8px;
+  background:rgba(255,255,255,0.6);
+  border-radius:50%;
+  top:50%; left:50%;
+  pointer-events:none;
+  transform:translate(-50%,-50%) scale(0);
+  opacity:0;
+  transition:0.3s;
+}
+
+.bubbleBtn:hover::before {
+  transform:translate(-150%,-150%) scale(1);
+  opacity:1;
+}
+
+.bubbleBtn:hover::after {
+  transform:translate(150%,-150%) scale(1);
+  opacity:1;
+}
+
+/* TOP BAR */
+.top{display:flex;justify-content:space-between;margin-bottom:10px;align-items:center;}
+.score{font-weight:800;color:gold;font-size:18px;}
+.progress{color:#a855f7;font-size:13px;}
+</style>
+</head>
+
+<body>
+
+<!-- Clouds -->
+<div class="cloud"></div>
+<div class="cloud"></div>
+<div class="cloud"></div>
+
+<!-- Sparkles -->
+<div class="sparkle" style="left:50px; animation-duration:6s;"></div>
+<div class="sparkle" style="left:300px; animation-duration:8s;"></div>
+<div class="sparkle" style="left:600px; animation-duration:5s;"></div>
+<div class="sparkle" style="left:800px; animation-duration:7s;"></div>
+
+<div class="app">
+  <h1>🎤 GRAVOME-SEPA — Say the Word</h1>
+
+  <div id="instruction" class="panel">
+    <h2 style="margin:0 0 8px 0;">How to Play</h2>
+    <p>
+      1. Press <strong>Start Game</strong><br>
+      2. Press <strong>Say Word</strong> and speak the word<br>
+      3. Correct → ⭐ star and next word<br>
+      4. Wrong → repeat the same word<br>
+    </p>
+    <button id="startFromInstruction" class="bubbleBtn">Start Game</button>
+  </div>
+
+  <div id="gameArea" style="display:none;">
+    <div class="top">
+      <div class="score" id="score">⭐0</div>
+      <div class="progress" id="progress">Press Start</div>
+    </div>
+
+    <div class="panel">
+      <div class="wordBig" id="wordDisplay">Press Start</div>
+      <div class="chips" id="chipsContainer"></div>
+
+      <div class="controls">
+        <button id="startBtn" class="bubbleBtn">▶ Start</button>
+        <button id="listenBtn" disabled class="bubbleBtn">🎙️ Say Word</button>
+      </div>
+
+      <div class="feedback" id="feedback"></div>
+
+      <div class="scene">
+        <div class="hook">HOOK</div>
+        <div class="rope"></div>
+        <div class="personWrap" id="personWrap">
+          <svg viewBox="0 0 120 160" width="120" height="160">
+            <circle cx="60" cy="20" r="14" fill="#ffd6cc"/>
+            <circle cx="55" cy="18" r="2"/>
+            <circle cx="65" cy="18" r="2"/>
+            <path d="M50 24 q20 10 20 0" stroke="#7b3b7b" stroke-width="2" fill="none"/>
+            <rect x="50" y="34" width="20" height="60" rx="6" fill="#c7a6ff"/>
+            <line x1="40" y1="40" x2="50" y2="50" stroke="#c7a6ff" stroke-width="6" stroke-linecap="round"/>
+            <line x1="80" y1="40" x2="70" y2="50" stroke="#c7a6ff" stroke-width="6" stroke-linecap="round"/>
+            <line x1="53" y1="94" x2="53" y2="112" stroke="#7b61d8" stroke-width="6" stroke-linecap="round"/>
+            <line x1="67" y1="94" x2="67" y2="112" stroke="#7b61d8" stroke-width="6" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="ball" id="ball"></div>
+      </div>
+    </div>
+
+    <div class="end" id="endArea">
+      <div id="endMessage"></div>
+      <button class="replay bubbleBtn" id="replayBtn">Play Again</button>
+      <button class="home bubbleBtn" id="homeBtn">🏠 Back to Home</button>
+      <button class="next bubbleBtn" id="nextBtn">➡ Next Game</button>
+    </div>
+  </div>
+</div>
+
+<!-- SOUNDS -->
+<audio id="correctSound" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
+<audio id="wrongSound" src="https://actions.google.com/sounds/v1/cartoon/boing.ogg"></audio>
+<audio id="startSound" src="https://actions.google.com/sounds/v1/cartoon/pop.ogg"></audio>
+<audio id="endSound" src="https://actions.google.com/sounds/v1/cartoon/celebration.ogg"></audio>
+
+<script>
+// ===============================
+// WORD GROUPS
+// ===============================
+const wordGroups = [
+  ["kind","caring","gentle","thoughtful","considerate"],
+  ["funny","silly","goofy","playful","whimsical"],
+  ["fast","quick","speedy","brisk","hasty"],
+  ["calm","peaceful","relaxed","serene","tranquil"],
+  ["happy","joyful","cheerful","delighted","content"]
+];
+
+let groupIndex = 0, wordIndex = 0, score = 0;
+let recognition = null;
+let firstTry = true;
+let accepting = false;
+
+// DOM
+const startBtn = document.getElementById('startBtn');
+const listenBtn = document.getElementById('listenBtn');
+const wordDisplay = document.getElementById('wordDisplay');
+const feedback = document.getElementById('feedback');
+const chipsContainer = document.getElementById('chipsContainer');
+const progressEl = document.getElementById('progress');
+const scoreEl = document.getElementById('score');
+const ball = document.getElementById('ball');
+const personWrap = document.getElementById('personWrap');
+const endArea = document.getElementById('endArea');
+const endMessage = document.getElementById('endMessage');
+const replayBtn = document.getElementById('replayBtn');
+const instruction = document.getElementById('instruction');
+const startFromInstruction = document.getElementById('startFromInstruction');
+const gameArea = document.getElementById('gameArea');
+const homeBtn = document.getElementById('homeBtn');
+const nextBtn = document.getElementById('nextBtn');
+
+// Sounds
+const correctSound = document.getElementById("correctSound");
+const wrongSound = document.getElementById("wrongSound");
+const startSound = document.getElementById("startSound");
+const endSound = document.getElementById("endSound");
+
+// ===============================
+// SPEECH
+// ===============================
+function normalizeText(t){ 
+  return t.toLowerCase().replace(/[^a-z\s]/g,'').replace(/\s+/g,' ').trim(); 
+}
+
+function setupRecognition(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){
+    alert("Speech recognition not supported. Use Chrome or Edge.");
+    return;
+  }
+  recognition = new SR();
+  recognition.lang='en-US';
+  recognition.interimResults=false;
+  recognition.maxAlternatives=3;
+
+  recognition.onstart=()=>{ feedback.textContent="🎤 Listening..."; };
+
+  recognition.onresult=(evt)=>{
+    if(!accepting) return;
+    accepting=false;
+
+    const spoken = normalizeText(evt.results[0][0].transcript);
+    const target = normalizeText(wordGroups[groupIndex][wordIndex]);
+
+    if(spoken === target){
+      handleCorrect(spoken);
+    } else {
+      handleWrong(spoken);
+    }
+  };
+
+  recognition.onerror=()=>{
+    feedback.textContent="⚠️ Mic error. Try again.";
+    accepting=true;
+  };
+}
+window.onload = setupRecognition;
+
+// ===============================
+// EFFECTS
+// ===============================
+function animateBallHit(){
+  ball.style.display='block';
+  ball.classList.remove('fly');
+  void ball.offsetWidth;
+  ball.classList.add('fly');
+  setTimeout(()=>{ 
+    ball.style.display='none'; 
+    personWrap.classList.add('personHit');
+    setTimeout(()=>{ personWrap.classList.remove('personHit'); },400);
+  },500);
+}
+
+// ===============================
+// UI
+// ===============================
+function renderChips(){
+  chipsContainer.innerHTML='';
+  wordGroups[groupIndex].forEach((w,i)=>{
+    const el=document.createElement('div');
+    el.className='chip';
+    el.id=`chip-${groupIndex}-${i}`;
+    el.textContent=w;
+    chipsContainer.appendChild(el);
+  });
+}
+
+function updateProgress(){
+  progressEl.textContent=`Group ${groupIndex+1}/${wordGroups.length} • Word ${wordIndex+1}/${wordGroups[groupIndex].length}`;
+}
+
+function updateScore(delta=0){
+  score+=delta;
+  scoreEl.textContent='⭐'+score;
+}
+
+function showCurrentWord(){
+  wordDisplay.textContent=wordGroups[groupIndex][wordIndex];
+  feedback.textContent="Say the displayed word.";
+  feedback.className='feedback';
+  listenBtn.disabled=false;
+  firstTry=true;
+  accepting=true;
+  updateProgress();
+}
+
+function finishGroup(){
+  setTimeout(()=>{
+    groupIndex++;
+    wordIndex=0;
+    if(groupIndex>=wordGroups.length){
+      endGame();
+    } else {
+      renderChips();
+      showCurrentWord();
+    }
+  },800);
+}
+
+function endGame(){
+  endSound.play();
+  endArea.style.display='block';
+  endMessage.textContent=`🎉 Finished! You earned ${score} stars.`;
+  listenBtn.disabled=true;
+  startBtn.disabled=false;
+}
+
+// ===============================
+// HANDLERS
+// ===============================
+function handleCorrect(spoken){
+  correctSound.play();
+  feedback.className='feedback ok';
+  feedback.textContent=`✅ Correct! You said "${spoken}"`;
+  if(firstTry) updateScore(1);
+
+  document.getElementById(`chip-${groupIndex}-${wordIndex}`).classList.add('correct');
+
+  setTimeout(()=>{
+    wordIndex++;
+    if(wordIndex>=wordGroups[groupIndex].length){
+      finishGroup();
+    } else {
+      showCurrentWord(); // AUTO NEXT
+    }
+  },800);
+}
+
+function handleWrong(spoken){
+  wrongSound.play();
+  animateBallHit();
+  feedback.className='feedback bad';
+  feedback.textContent=`❌ "${spoken}" is wrong. Say "${wordGroups[groupIndex][wordIndex]}" again.`;
+  firstTry=false;
+
+  document.getElementById(`chip-${groupIndex}-${wordIndex}`).classList.add('missed');
+
+  setTimeout(()=>{
+    accepting=true; // REPEAT SAME WORD
+  },900);
+}
+
+// ===============================
+// BUTTONS
+// ===============================
+startFromInstruction.addEventListener('click',()=>{
+  instruction.style.display='none';
+  gameArea.style.display='block';
+  startBtn.click();
+});
+
+startBtn.addEventListener('click',()=>{
+  startSound.play();
+  groupIndex=0; wordIndex=0; score=0;
+  updateScore(0);
+  renderChips();
+  showCurrentWord();
+  startBtn.disabled=true;
+  listenBtn.disabled=false;
+  endArea.style.display='none';
+});
+
+listenBtn.addEventListener('click',()=>{
+  if(recognition){
+    try{
+      recognition.start();
+      listenBtn.disabled=true;
+      setTimeout(()=>{ listenBtn.disabled=false; },1200);
+    }catch(e){}
+  }
+});
+
+replayBtn.addEventListener('click',()=>{
+  endArea.style.display='none';
+  startBtn.disabled=false;
+  startBtn.click();
+});
+
+homeBtn.addEventListener('click', () => {
+  endArea.style.display='none';
+  instruction.style.display='block';
+});
+
+nextBtn.addEventListener('click', () => {
+  endArea.style.display='none';
+  startBtn.disabled=false;
+  startBtn.click();
+});
+</script>
+
+</body>
+</html>
